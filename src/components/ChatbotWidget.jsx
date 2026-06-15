@@ -47,23 +47,58 @@ export default function ChatbotWidget({
     setIsTyping(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("No API key");
+      }
+
+      const systemPrompt = `You are an expert campaign onboarding assistant. Help the user fill out the Campaign Brief based on their description.
+Current form state: ${JSON.stringify(state)}
+
+Extract details and return ONLY a valid JSON object matching the following structure. Do NOT include markdown code blocks (like \`\`\`json).
+{
+  "reply": "Conversational reply back to the user acknowledging their input or answering their questions",
+  "suggestedFieldUpdates": {
+    "brand.name": "Extracted brand name",
+    "brand.description": "Extracted description",
+    "geography.budgetRange": "Extracted budget range (e.g. 10k-50k)",
+    "audience.personas": ["Students", "Parents"]
+  }
+}
+If no fields can be extracted, omit 'suggestedFieldUpdates' or leave it empty.`;
+
+      // Build chat history for Gemini (roles: 'user' and 'model')
+      const chatHistory = messages.slice(-10).map((m) => ({
+        role: m.role === 'bot' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+      // Append the new message
+      chatHistory.push({
+        role: 'user',
+        parts: [{ text }]
+      });
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sessionId: state.sessionId,
-          message: text,
-          formState: state,
-          history: messages.slice(-10).map((m) => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }))
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: chatHistory,
+          generationConfig: {
+            responseMimeType: 'application/json'
+          }
         }),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(15000)
       });
 
       setIsTyping(false);
 
       if (res.ok) {
-        const data = await res.json();
-        addMessage('bot', data.reply, data.suggestedFieldUpdates);
+        const json = await res.json();
+        const resultText = json.candidates[0].content.parts[0].text;
+        const data = JSON.parse(resultText);
+        addMessage('bot', data.reply, data.suggestedFieldUpdates && Object.keys(data.suggestedFieldUpdates).length > 0 ? data.suggestedFieldUpdates : null);
       } else {
         throw new Error();
       }
