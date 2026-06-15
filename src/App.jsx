@@ -1,0 +1,828 @@
+import React, { useState, useEffect } from 'react';
+import CardProgressBar from './components/CardProgressBar';
+import Step1Brand from './components/Step1Brand';
+import Step2Product from './components/Step2Product';
+import Step3Audience from './components/Step3Audience';
+import Step4Geography from './components/Step4Geography';
+import Step5Review from './components/Step5Review';
+import ChatbotWidget from './components/ChatbotWidget';
+import ConfirmationPage from './components/ConfirmationPage';
+import { db } from './firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import adometerLogo from './assets/logo.png';
+
+// Helper to generate Session ID
+const generateId = () => {
+  return 'BRIEF-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+};
+
+const normalizeUrl = (str) => {
+  let val = str.trim();
+  if (!val) return '';
+  if (!/^https?:\/\//i.test(val)) {
+    val = 'https://' + val;
+  }
+  return val;
+};
+
+const isValidUrl = (str) => {
+  const normalized = normalizeUrl(str);
+  try {
+    const u = new URL(normalized);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};
+
+const defaultState = {
+  brand: { name: '', url: '', industries: [], description: '', isScraped: false },
+  products: { list: [], selected: [], offer: { hasOffer: false, description: '', isScraped: false }, isScraped: false },
+  audience: { personas: [], ageRange: [25, 44], lifestyleContext: '' },
+  geography: { cities: [], specificAreas: '', budgetRange: '', goLiveDate: '', creativesStatus: '' },
+  sessionId: generateId()
+};
+
+export default function App() {
+  const [state, setState] = useState(defaultState);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [briefId, setBriefId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastScrapedUrl, setLastScrapedUrl] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  // Scraper loading state
+  const [scraperState, setScraperState] = useState({
+    loading: false,
+    type: '',
+    message: ''
+  });
+
+  // Validation errors
+  const [errors, setErrors] = useState({});
+
+  // Toasts
+  const [toasts, setToasts] = useState([]);
+
+  // Load state on startup (support Firebase resuming)
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const ses = params.get('session');
+        if (ses) {
+          const docRef = doc(db, 'drafts', ses);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data().formData;
+            setState(data);
+            setShowWelcome(false);
+            addToast('📋 Resumed campaign intake session', 'info');
+            return;
+          }
+        }
+      } catch (_) { }
+    };
+    initSession();
+  }, []);
+
+  // Save state on changes
+  const saveState = (newState) => {
+    setState(newState);
+    try {
+      localStorage.setItem('adometer_state', JSON.stringify(newState));
+    } catch (_) { }
+
+    // Auto-save draft to Firestore
+    try {
+      setDoc(doc(db, 'drafts', newState.sessionId), {
+        formData: newState,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (_) { }
+  };
+
+  const addToast = (msg, type = 'info') => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, msg, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
+
+  // State modification helpers
+  const updateBrandField = (field, value) => {
+    const newState = {
+      ...state,
+      brand: { ...state.brand, [field]: value }
+    };
+    saveState(newState);
+
+    // Clear validation error on change
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const updateOfferField = (field, value) => {
+    const newState = {
+      ...state,
+      products: {
+        ...state.products,
+        offer: { ...state.products.offer, [field]: value }
+      }
+    };
+    saveState(newState);
+  };
+
+  const updateAudienceField = (field, value) => {
+    const newState = {
+      ...state,
+      audience: { ...state.audience, [field]: value }
+    };
+    saveState(newState);
+
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const updateGeographyField = (field, value) => {
+    const newState = {
+      ...state,
+      geography: { ...state.geography, [field]: value }
+    };
+    saveState(newState);
+
+    // Dynamic chatbot trigger: if user chooses "need_help" for creatives, automatically open chatbot
+    if (field === 'creativesStatus' && value === 'need_help') {
+      setTimeout(() => {
+        setChatOpen(true);
+      }, 500);
+    }
+
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const toggleCity = (city) => {
+    const current = state.geography.cities;
+    const newCities = current.includes(city)
+      ? current.filter((c) => c !== city)
+      : [...current, city];
+    updateGeographyField('cities', newCities);
+  };
+
+  const toggleIndustry = (ind) => {
+    const current = state.brand.industries;
+    const newInds = current.includes(ind)
+      ? current.filter((i) => i !== ind)
+      : [...current, ind];
+    updateBrandField('industries', newInds);
+  };
+
+  const toggleProduct = (name) => {
+    const current = state.products.selected;
+    const newSelected = current.includes(name)
+      ? current.filter((n) => n !== name)
+      : [...current, name];
+
+    const newState = {
+      ...state,
+      products: { ...state.products, selected: newSelected }
+    };
+    saveState(newState);
+
+    if (errors.selected) {
+      setErrors((prev) => ({ ...prev, selected: '' }));
+    }
+  };
+
+  const addManualProduct = (name) => {
+    const currentList = state.products.list;
+    const currentSelected = state.products.selected;
+
+    // Avoid duplicates
+    if (currentList.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      return;
+    }
+
+    const newState = {
+      ...state,
+      products: {
+        ...state.products,
+        list: [...currentList, { name }],
+        selected: [...currentSelected, name]
+      }
+    };
+    saveState(newState);
+
+    if (errors.selected) {
+      setErrors((prev) => ({ ...prev, selected: '' }));
+    }
+  };
+
+  const togglePersona = (pId) => {
+    const current = state.audience.personas;
+    const newPersonas = current.includes(pId)
+      ? current.filter((p) => p !== pId)
+      : [...current, pId];
+
+    // Calculate dynamic age presets based on persona selection
+    const PERSONA_AGE_MAP = {
+      'Young professionals': [22, 35],
+      'Students': [18, 25],
+      'Fitness enthusiasts': [18, 45],
+      'Parents': [28, 50],
+      'HNI / affluent consumers': [35, 65],
+      'General audience': [18, 65]
+    };
+
+    let minAge = 65;
+    let maxAge = 18;
+
+    newPersonas.forEach((p) => {
+      const range = PERSONA_AGE_MAP[p];
+      if (range) {
+        if (range[0] < minAge) minAge = range[0];
+        if (range[1] > maxAge) maxAge = range[1];
+      }
+    });
+
+    const calculatedRange = newPersonas.length > 0 ? [minAge, maxAge] : state.audience.ageRange;
+
+    const newState = {
+      ...state,
+      audience: {
+        ...state.audience,
+        personas: newPersonas,
+        ageRange: calculatedRange
+      }
+    };
+    saveState(newState);
+
+    if (errors.personas) {
+      setErrors((prev) => ({ ...prev, personas: '' }));
+    }
+  };
+
+  // Reset previously scraped information on URL change
+  const resetScrapedData = (targetUrl) => {
+    const newState = {
+      ...state,
+      brand: { ...state.brand, name: '', description: '', industries: [], isScraped: false, url: targetUrl },
+      products: { list: [], selected: [], offer: { hasOffer: false, description: '', isScraped: false }, isScraped: false }
+    };
+    saveState(newState);
+    setErrors({});
+  };
+
+  // Gemini API-based Scraper using AI Studio key
+  const fetchGeminiScrapeData = async (urlVal, apiKey) => {
+    let webText = '';
+
+    // Try CORS proxies in parallel to get html fast
+    try {
+      const fetchWithProxy = async (proxyUrl, extractFn) => {
+        const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(2500) });
+        if (!proxyRes.ok) throw new Error('Proxy failed');
+        const text = await extractFn(proxyRes);
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        doc.querySelectorAll('script, style, noscript, svg, iframe, header, footer, nav').forEach((el) => el.remove());
+        const content = (doc.body.textContent || doc.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
+        if (!content) throw new Error('No content extracted');
+        return content;
+      };
+
+      webText = await Promise.any([
+        fetchWithProxy(`https://corsproxy.io/?url=${encodeURIComponent(urlVal)}`, res => res.text()),
+        fetchWithProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(urlVal)}`, async res => (await res.json()).contents)
+      ]);
+    } catch (err) {
+      console.warn('Scraping proxies failed or timed out, using URL alone.', err);
+    }
+
+    const prompt = `You are an expert campaign onboarding assistant. Analyze the website URL: "${urlVal}" and its raw text content:
+---
+${webText || "No text could be extracted. Please infer brand details based purely on the domain name."}
+---
+
+Extract details and return ONLY a valid JSON object matching the following structure. Do NOT include markdown code blocks (like \`\`\`json):
+{
+  "brandName": "Official name of the brand",
+  "description": "Short description of what they do or sell (must be under 160 characters)",
+  "industries": ["Strictly select ONLY the most relevant industry categories (usually 1, maximum 2) from this list that directly describe the brand: F&B, Health & Wellness, Fashion, Beauty, Finance, EdTech, Retail, SaaS / Tech. Do not select multiple unrelated industries."],
+  "products": [
+    { "name": "Exact or suggested main product 1", "url": "/products/1" },
+    { "name": "Exact or suggested main product 2", "url": "/products/2" },
+    { "name": "Exact or suggested main product 3", "url": "/products/3" }
+  ],
+  "activeOffers": [
+    { "text": "Details of any active discount/coupon code/offer found on the site. If none found, write: Get 10% off your first order using code WELCOME10" }
+  ]
+}`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      })
+    });
+
+    if (!res.ok) throw new Error('Gemini API call failed');
+    const json = await res.json();
+    const resultText = json.candidates[0].content.parts[0].text;
+    return JSON.parse(resultText);
+  };
+
+  // Website Scraper triggers
+  const triggerScrape = async () => {
+    let urlVal = state.brand.url.trim();
+    if (!urlVal) return;
+    urlVal = normalizeUrl(urlVal);
+    updateBrandField('url', urlVal);
+
+    if (!isValidUrl(urlVal)) {
+      setErrors((prev) => ({ ...prev, url: 'Please enter a valid URL (e.g. example.com)' }));
+      return;
+    }
+
+    if (urlVal !== lastScrapedUrl) {
+      resetScrapedData(urlVal);
+    }
+
+    setScraperState({
+      loading: true,
+      type: 'loading',
+      message: 'Fetching brand details from your website...'
+    });
+
+    try {
+      // 1. Try real API scraper first
+      let data;
+      try {
+        const res = await fetch('/api/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: urlVal }),
+          signal: AbortSignal.timeout(8000)
+        });
+        if (res.ok) {
+          const apiRes = await res.json();
+          if (apiRes.status === 'success') {
+            data = apiRes.data;
+          }
+        }
+      } catch (_) { }
+
+      // 2. Try Gemini API next if key is configured
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!data && geminiApiKey && geminiApiKey.trim() !== '') {
+        try {
+          data = await fetchGeminiScrapeData(urlVal, geminiApiKey);
+        } catch (err) {
+          console.error('Gemini scrape error:', err);
+        }
+      }
+
+      // 3. Fallback to offline mock generator
+      if (!data) {
+        await new Promise((r) => setTimeout(r, 1800));
+        data = generateMockScrapeData(urlVal);
+      }
+
+      // 3. Apply scraper outcomes
+      const newState = {
+        ...state,
+        brand: {
+          ...state.brand,
+          name: data.brandName || '',
+          description: data.description || '',
+          industries: data.industries || [],
+          isScraped: true,
+          url: urlVal
+        },
+        products: {
+          ...state.products,
+          list: data.products || [],
+          selected: data.products ? data.products.map((p) => p.name) : [],
+          offer: data.activeOffers && data.activeOffers.length > 0 ? {
+            hasOffer: true,
+            description: data.activeOffers[0].text,
+            isScraped: true
+          } : {
+            hasOffer: false,
+            description: '',
+            isScraped: false
+          },
+          isScraped: true
+        }
+      };
+
+      saveState(newState);
+      setLastScrapedUrl(urlVal);
+
+      setScraperState({
+        loading: false,
+        type: 'success',
+        message: '✓ Brand details fetched! Fields below have been auto-filled.'
+      });
+      addToast('✦ Auto-filled fields from your website', 'info');
+
+    } catch (e) {
+      setScraperState({
+        loading: false,
+        type: 'error',
+        message: "⚠ Couldn't read this website — please fill in manually."
+      });
+      addToast('Could not read website — please fill in manually', 'error');
+    }
+  };
+
+  const generateMockScrapeData = (url) => {
+    const domain = new URL(url).hostname.replace('www.', '');
+    const brandName = domain.split('.')[0];
+    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    const name = capitalize(brandName);
+
+    const lowerDomain = domain.toLowerCase();
+    let industry = 'SaaS / Tech';
+    let description = `${name} is an innovative software company providing premium solutions to help you optimize and scale your business operations.`;
+    let products = [
+      { name: `${name} Platform Subscription`, url: '/pricing' },
+      { name: `${name} Core API Integration`, url: '/docs/api' },
+      { name: `${name} Analytics Dashboard`, url: '/features/analytics' }
+    ];
+    let activeOffers = [{ text: 'Get a 14-day free trial on any premium plan — no credit card required', cta: 'Start Free Trial' }];
+
+    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic/i.test(lowerDomain)) {
+      industry = 'Health & Wellness';
+      description = `${name} offers premium quality health and wellness products designed to elevate your everyday physical performance and mental well-being.`;
+      products = [
+        { name: `${name} Protein Powder`, url: '/products/protein' },
+        { name: `${name} Daily Vitamins`, url: '/products/vitamins' },
+        { name: `${name} Recovery Shake`, url: '/products/recovery' }
+      ];
+      activeOffers = [{ text: 'Get 15% off your first health stack with code HEALTH15', cta: 'Shop Now' }];
+    } else if (/fashion|wear|apparel|clothing|style|shirt|nike|adidas|store|brand|shop|wellbi/i.test(lowerDomain)) {
+      industry = 'Fashion';
+      description = `Discover the latest apparel collections from ${name}. We design premium and stylish streetwear tailored for comfort and modern aesthetics.`;
+      products = [
+        { name: `${name} Signature Hoodie`, url: '/collections/hoodies' },
+        { name: `${name} Oversized Tee`, url: '/collections/tees' },
+        { name: `${name} Premium Denim`, url: '/collections/denim' }
+      ];
+      activeOffers = [{ text: 'Free shipping on orders over ₹2,999 + 10% off sign-up', cta: 'Shop Collections' }];
+    } else if (/food|pizza|burger|cafe|restaurant|drink|bake|kitchen|chef|delicious|order|eat/i.test(lowerDomain)) {
+      industry = 'F&B';
+      description = `Indulge in delicious, freshly-made culinary delights from ${name}. We source organic ingredients to serve you flavor-packed dishes daily.`;
+      products = [
+        { name: `${name} Gourmet Pizza`, url: '/menu/pizza' },
+        { name: `${name} Classic Burger Combo`, url: '/menu/burgers' },
+        { name: `${name} Fresh Brew Coffee`, url: '/menu/drinks' }
+      ];
+      activeOffers = [{ text: 'Get 20% off your first online food order with code EATFRESH', cta: 'Order Now' }];
+    } else if (/beauty|cosmetic|skin|hair|glow|makeup|care|salon/i.test(lowerDomain)) {
+      industry = 'Beauty';
+      description = `Unveil your natural radiance with ${name}'s clean beauty, skincare, and organic cosmetics designed to nourish and protect.`;
+      products = [
+        { name: `${name} Hydrating Glow Serum`, url: '/shop/glow-serum' },
+        { name: `${name} Organic Cleansing Oil`, url: '/shop/cleanser' },
+        { name: `${name} Nourishing Lip Balm`, url: '/shop/balm' }
+      ];
+      activeOffers = [{ text: 'Receive a free luxury travel kit on all orders above ₹1,999', cta: 'Shop Beauty' }];
+    } else if (/finance|pay|coin|bank|invest|fund|money|credit|wealth|capital/i.test(lowerDomain)) {
+      industry = 'Finance';
+      description = `Empower your financial future with ${name}. We offer secure, smart wealth management, investment insights, and modern digital banking.`;
+      products = [
+        { name: `${name} Wealth Planner`, url: '/services/wealth' },
+        { name: `${name} High-Yield Investment Account`, url: '/services/savings' },
+        { name: `${name} Secure Crypto Wallet`, url: '/services/crypto' }
+      ];
+      activeOffers = [{ text: 'Start investing today with zero brokerage fees for the first 30 days', cta: 'Get Started' }];
+    } else if (/edu|learn|class|course|school|academy|code|study|university|train/i.test(lowerDomain)) {
+      industry = 'EdTech';
+      description = `Transform your career and learn in-demand skills with ${name}. Explore expert-led interactive courses and professional bootcamps.`;
+      products = [
+        { name: `${name} Full-Stack Web Development Bootcamp`, url: '/courses/web-dev' },
+        { name: `${name} Data Science Foundation Course`, url: '/courses/data-science' },
+        { name: `${name} 1-on-1 Mentorship Sessions`, url: '/mentorship' }
+      ];
+      activeOffers = [{ text: 'Claim your free introductory workshop session worth ₹999', cta: 'Enroll Free' }];
+    } else if (/retail|buy|sell|market|mall|mart|grocery|supermarket|deal|discount|commerce|ecom/i.test(lowerDomain)) {
+      industry = 'Retail';
+      description = `Shop the best deals online at ${name}. We offer a wide range of top-tier consumer products with lightning-fast delivery.`;
+      products = [
+        { name: `${name} Smart Home Gadget`, url: '/shop/gadgets' },
+        { name: `${name} Ergonomic Office Chair`, url: '/shop/furniture' },
+        { name: `${name} Wireless Earbuds`, url: '/shop/audio' }
+      ];
+      activeOffers = [{ text: 'Enjoy 10% off your entire cart using code WELCOME10 at checkout', cta: 'Shop Deals' }];
+    }
+
+    return {
+      brandName: name,
+      description,
+      industries: [industry],
+      products,
+      activeOffers
+    };
+  };
+
+  // Validations per step
+  const validateStep = (step) => {
+    const newErrors = {};
+    if (step === 1) {
+      if (!state.brand.name.trim()) newErrors.name = 'Please enter your brand name';
+      if (!state.brand.url.trim() || !isValidUrl(state.brand.url)) newErrors.url = 'Please enter a valid URL (e.g. yourbrand.com)';
+      if (!state.brand.industries.length) newErrors.industries = 'Select at least one industry';
+      if (!state.brand.description.trim()) newErrors.description = 'Please add a brief brand description';
+    }
+
+    if (step === 2) {
+      if (!state.products.selected.length) newErrors.selected = 'Select at least one product';
+    }
+
+    if (step === 3) {
+      if (!state.audience.personas.length) newErrors.personas = 'Select at least one audience persona';
+    }
+
+    if (step === 4) {
+      if (!state.geography.cities.length) newErrors.cities = 'Select at least one target city';
+      if (!state.geography.budgetRange) newErrors.budgetRange = 'Please select a budget range';
+      if (!state.geography.goLiveDate) newErrors.goLiveDate = 'Please select a valid go-live date';
+      if (!state.geography.creativesStatus) newErrors.creativesStatus = 'Please select your creatives status';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const goToStep = (step) => {
+    // Permitted if returning or if target validation is satisfied
+    if (step < currentStep || validateStep(currentStep)) {
+      setCurrentStep(step);
+    }
+  };
+
+  // Final brief submit flow linked to Firebase
+  const submitBrief = async () => {
+    setIsSubmitting(true);
+    const generatedBriefId = 'BRIEF-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+
+    try {
+      // Save campaign brief into the "briefs" collection in Firestore
+      await setDoc(doc(db, "briefs", state.sessionId), {
+        briefId: generatedBriefId,
+        sessionId: state.sessionId,
+        brand: state.brand,
+        products: state.products,
+        audience: state.audience,
+        geography: state.geography,
+        submittedAt: new Date().toISOString()
+      });
+
+      addToast('✓ Saved campaign brief to database!', 'success');
+    } catch (err) {
+      console.error("Firebase write error:", err);
+      addToast('⚠ Database error — saved locally instead.', 'error');
+    }
+
+    localStorage.removeItem('adometer_state');
+
+    setBriefId(generatedBriefId);
+    setIsSubmitted(true);
+    setIsSubmitting(false);
+  };
+
+  // Copy save link to clipboard
+  const saveAndContinue = () => {
+    const url = window.location.href.split('?')[0] + '?session=' + state.sessionId;
+    navigator.clipboard?.writeText(url).then(() => {
+      addToast('✓ Progress saved! Link copied to clipboard.', 'success');
+    }).catch(() => {
+      addToast('✓ Progress saved locally.', 'success');
+    });
+  };
+
+  // Apply suggested chatbot updates
+  const applySuggestedUpdates = (updates) => {
+    let newState = { ...state };
+    Object.entries(updates).forEach(([key, val]) => {
+      const parts = key.split('.');
+      let obj = newState;
+      for (let i = 0; i < parts.length - 1; i++) {
+        obj = obj[parts[i]];
+      }
+      obj[parts[parts.length - 1]] = val;
+    });
+    saveState(newState);
+  };
+
+  return (
+    <div className="relative min-height-screen z-10">
+      {/* Toast notifications */}
+      <div className="fixed top-[76px] right-5 z-[500] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`px-4 py-3 border rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md transition-all duration-300 pointer-events-auto flex items-center gap-2 ${t.type === 'success'
+              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-600'
+              : t.type === 'error'
+                ? 'bg-red-50/90 border-red-200 text-red-600'
+                : 'bg-white/95 border-slate-200 text-blue-600'
+              }`}
+          >
+            <span>{t.msg}</span>
+          </div>
+        ))}
+      </div>
+
+      <header className="sticky top-0 z-40 bg-slate-950/85 border-b border-slate-800/50 backdrop-blur-lg px-6 py-3.5 shadow-lg shadow-slate-950/10">
+        <div className="max-w-[900px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src={adometerLogo} alt="Adometer" className="h-7 w-auto object-contain" />
+          </div>
+          {!isSubmitted && (
+            <button
+              onClick={saveAndContinue}
+              className="flex items-center gap-1 bg-none border-none text-[11px] text-slate-400 font-bold hover:text-cyan-400 cursor-pointer transition-all"
+            >
+              💾 Save &amp; Continue Later
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-[780px] mx-auto px-4 py-10 pb-24">
+        {showWelcome ? (
+          <section className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12 text-center max-w-[850px] mx-auto animate-fadeIn">
+            <div className="inline-flex items-center gap-1.5 bg-blue-50/60 border border-blue-200/50 rounded-full px-4 py-1.5 text-[10px] font-bold text-cyan-655 uppercase tracking-widest mb-8">
+              AI-Powered Campaign Brief
+            </div>
+            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-6 max-w-[720px]">
+              Launch your campaign <br />
+              <span className="bg-gradient-to-r from-blue-900 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                in under 5 minutes
+              </span>
+            </h1>
+            <p className="text-base sm:text-lg text-slate-600 font-medium max-w-[540px] leading-relaxed mb-12">
+              Our intelligent form auto-fills fields from your website and guides you through the process with an AI assistant — no jargon, no complexity.
+            </p>
+
+            <div className="flex gap-10 flex-wrap justify-center mb-12">
+              <div className="text-center">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">5 min</div>
+                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Avg completion time</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">60%</div>
+                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Fields auto-filled</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">AI</div>
+                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Guided experience</div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4 justify-center">
+              <button
+                onClick={() => {
+                  setShowWelcome(false);
+                  setState(defaultState); // Starts with completely empty form
+                }}
+                className="px-8 py-3.5 bg-gradient-to-r from-blue-900 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/25 transition-all hover:-translate-y-0.5 cursor-pointer text-sm"
+              >
+                ✦ Start Campaign Brief →
+              </button>
+              <button
+                onClick={() => {
+                  setShowWelcome(false);
+                  setState(defaultState); // Starts with completely empty form
+                  setChatOpen(true);
+                }}
+                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm cursor-pointer"
+              >
+                💬 Fill via chat instead
+              </button>
+            </div>
+          </section>
+        ) : isSubmitted ? (
+          <div className="glass-panel rounded-3xl p-8">
+            <ConfirmationPage briefId={briefId} />
+          </div>
+        ) : (
+          <div className="glass-panel glass-panel-hover rounded-3xl p-8 transition-shadow duration-300 relative overflow-hidden">
+            <CardProgressBar
+              currentStep={currentStep}
+              stepsCount={5}
+              stepNames={['Brand', 'Product', 'Audience', 'Geography', 'Review']}
+              goToStep={goToStep}
+            />
+
+            {/* Steps Container */}
+            <div>
+              {currentStep === 1 && (
+                <Step1Brand
+                  brand={state.brand}
+                  updateBrandField={updateBrandField}
+                  errors={errors}
+                  triggerScrape={triggerScrape}
+                  scraperState={scraperState}
+                  toggleIndustry={toggleIndustry}
+                />
+              )}
+
+              {currentStep === 2 && (
+                <Step2Product
+                  products={state.products}
+                  toggleProduct={toggleProduct}
+                  addManualProduct={addManualProduct}
+                  updateOfferField={updateOfferField}
+                  errors={errors}
+                />
+              )}
+
+              {currentStep === 3 && (
+                <Step3Audience
+                  audience={state.audience}
+                  updateAudienceField={updateAudienceField}
+                  togglePersona={togglePersona}
+                  errors={errors}
+                />
+              )}
+
+              {currentStep === 4 && (
+                <Step4Geography
+                  geography={state.geography}
+                  updateGeographyField={updateGeographyField}
+                  toggleCity={toggleCity}
+                  errors={errors}
+                />
+              )}
+
+              {currentStep === 5 && (
+                <Step5Review
+                  state={state}
+                  goToStep={goToStep}
+                  onSubmit={submitBrief}
+                  isSubmitting={isSubmitting}
+                />
+              )}
+            </div>
+
+            {/* Bottom Nav Row */}
+            {currentStep < 5 && (
+              <div className="flex justify-between items-center mt-9 pt-6 border-t border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={currentStep === 1}
+                  className="px-5 py-2.5 bg-white border border-slate-200 text-xs font-semibold text-slate-600 rounded-xl hover:border-blue-600 hover:text-blue-600 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="px-6 py-2.5 bg-gradient-to-r from-blue-900 to-blue-600 text-white border-none text-xs font-bold rounded-xl hover:shadow-md hover:shadow-blue-500/10 cursor-pointer transition-all"
+                >
+                  Continue →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* Floating Chatbot assistant */}
+      {!isSubmitted && (
+        <ChatbotWidget
+          isOpen={chatOpen}
+          toggleChat={() => setChatOpen(!chatOpen)}
+          state={state}
+          applySuggestedUpdates={applySuggestedUpdates}
+          addToast={addToast}
+        />
+      )}
+    </div>
+  );
+}
