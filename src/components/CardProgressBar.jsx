@@ -1,20 +1,10 @@
 import React from 'react';
 
 export default function CardProgressBar({ currentStep, stepsCount, stepNames, goToStep }) {
-  const pct = Math.round((currentStep / stepsCount) * 100);
-
   return (
-    <div className="relative mb-8 pb-4 border-b border-slate-200/50">
-      {/* Progress Bar at the top edge of the card */}
-      <div className="absolute top-0 left-0 right-0 h-[4.5px] bg-slate-200/40 z-10">
-        <div
-          className="h-full bg-gradient-to-r from-blue-900 via-blue-600 to-cyan-600 transition-all duration-500 ease-out"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-
+    <div className="relative mb-6 pb-4">
       {/* Step Dots indicator bar */}
-      <div className="flex items-center justify-center w-full max-w-[420px] mx-auto mt-4 px-2">
+      <div className="flex items-center justify-center w-full max-w-[450px] mx-auto mt-4 px-2">
         {Array.from({ length: stepsCount }).map((_, i) => {
           const stepNum = i + 1;
           const isCompleted = stepNum < currentStep;
@@ -23,6 +13,15 @@ export default function CardProgressBar({ currentStep, stepsCount, stepNames, go
           return (
             <React.Fragment key={stepNum}>
               <div className="flex flex-col items-center relative">
+                {/* Chevron over active step */}
+                {isActive && (
+                  <div className="absolute -top-4 text-slate-500 text-xs">
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="2 2 6 6 10 2"></polyline>
+                    </svg>
+                  </div>
+                )}
+                
                 <button
                   type="button"
                   onClick={() => goToStep(stepNum)}
@@ -31,27 +30,33 @@ export default function CardProgressBar({ currentStep, stepsCount, stepNames, go
                   aria-label={`Go to Step ${stepNum}`}
                 >
                   <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300 ${
-                      isCompleted
-                        ? 'bg-gradient-to-br from-blue-950 to-blue-600 text-white shadow-md shadow-blue-500/30 border-transparent'
-                        : isActive
-                        ? 'bg-white border-2 border-blue-600 text-blue-600 shadow-sm shadow-blue-500/10'
-                        : 'bg-white/50 border border-slate-200 text-slate-450 font-medium'
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold transition-all duration-300 ${
+                      isCompleted || isActive
+                        ? 'bg-[#6bc04b] text-white shadow-md shadow-green-500/20'
+                        : 'bg-white border-2 border-slate-300 text-slate-400'
                     }`}
                   >
-                    {isCompleted ? '✓' : stepNum}
+                    {isCompleted ? (
+                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="1.5 5.5 4.5 8.5 10.5 1.5"></polyline>
+                      </svg>
+                    ) : (
+                      stepNum
+                    )}
                   </div>
                 </button>
-                <span className={`absolute top-8 text-[9px] font-bold tracking-tight uppercase whitespace-nowrap ${
-                  isActive ? 'text-blue-600' : isCompleted ? 'text-slate-700' : 'text-slate-400'
+                <span className={`absolute top-9 text-[11px] font-bold tracking-wide whitespace-nowrap ${
+                  isActive || isCompleted ? 'text-slate-700' : 'text-slate-400'
                 }`}>
                   {stepNames[i]}
                 </span>
               </div>
+              
+              {/* Connecting Line */}
               {i < stepsCount - 1 && (
                 <div
-                  className={`h-[2px] flex-1 mx-2 transition-all duration-300 ${
-                    stepNum < currentStep ? 'bg-blue-600' : 'bg-slate-200/70'
+                  className={`h-[2.5px] flex-1 mx-1 transition-all duration-300 ${
+                    stepNum < currentStep ? 'bg-[#6bc04b]' : 'bg-slate-300'
                   }`}
                 />
               )}

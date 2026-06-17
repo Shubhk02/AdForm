@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Checkbox from './Checkbox';
 
 const PERSONAS_LIST = [
   { id: 'Young professionals', label: '💼 Young Professionals' },
@@ -11,26 +12,57 @@ const PERSONAS_LIST = [
 
 export default function Step3Audience({
   audience,
-  updateAudienceField,
-  togglePersona,
+  products,
+  updateProductAudience,
   errors
 }) {
-  const minVal = audience.ageRange[0];
-  const maxVal = audience.ageRange[1];
+  const [selectedProducts, setSelectedProducts] = useState(['All Products']);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Derive the current data from the first selected product as the source of truth for the UI
+  const currentData = audience.productAudiences?.[selectedProducts[0]] || {
+    personas: [],
+    customPersonas: [],
+    ageRange: [25, 44],
+    lifestyleContext: ''
+  };
+
+  const minVal = currentData.ageRange[0];
+  const maxVal = currentData.ageRange[1];
 
   const handleMinChange = (e) => {
     const val = Math.min(parseInt(e.target.value), maxVal - 1);
-    updateAudienceField('ageRange', [val, maxVal]);
+    updateProductAudience(selectedProducts, 'ageRange', [val, maxVal]);
   };
 
   const handleMaxChange = (e) => {
     const val = Math.max(parseInt(e.target.value), minVal + 1);
-    updateAudienceField('ageRange', [minVal, val]);
+    updateProductAudience(selectedProducts, 'ageRange', [minVal, val]);
+  };
+
+  const togglePersona = (personaId) => {
+    const currentPersonas = currentData.personas;
+    const newPersonas = currentPersonas.includes(personaId)
+      ? currentPersonas.filter(p => p !== personaId)
+      : [...currentPersonas, personaId];
+    updateProductAudience(selectedProducts, 'personas', newPersonas);
   };
 
   const totalRange = 65 - 18;
   const leftPct = ((minVal - 18) / totalRange) * 100;
   const rightPct = ((maxVal - 18) / totalRange) * 100;
+
+  // Options for the dropdown include 'All Products' plus any specifically selected products from Step 2
+  const productOptions = ['All Products', ...(products || [])];
+
+  const toggleProductSelection = (prod) => {
+    if (selectedProducts.includes(prod)) {
+      if (selectedProducts.length === 1) return; // Keep at least one
+      setSelectedProducts(selectedProducts.filter(p => p !== prod));
+    } else {
+      setSelectedProducts([...selectedProducts, prod]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -42,16 +74,57 @@ export default function Step3Audience({
         </p>
       </div>
 
+      {/* Product Selector Multi-Select Dropdown */}
+      <div className="flex flex-col mb-4 relative z-50">
+        <label className="text-sm font-semibold text-slate-700 mb-1.5">
+          Select Product(s) to Configure Audience For
+        </label>
+        
+        <div 
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-semibold cursor-pointer flex justify-between items-center transition-all hover:bg-white hover:border-blue-300"
+        >
+          <span className="truncate pr-4 text-slate-700">
+            {selectedProducts.length === productOptions.length ? 'All Available Products' : selectedProducts.join(', ')}
+          </span>
+          <span className="text-slate-400 text-xs">{dropdownOpen ? '▲' : '▼'}</span>
+        </div>
+        
+        {dropdownOpen && (
+          <div className="absolute top-[76px] left-0 w-full bg-white border border-slate-200 shadow-xl rounded-xl p-2 flex flex-col gap-1 max-h-60 overflow-y-auto">
+            {productOptions.map((opt) => {
+              const isSel = selectedProducts.includes(opt);
+              return (
+                <div 
+                  key={opt} 
+                  onClick={() => toggleProductSelection(opt)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${isSel ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+                >
+                  <div className="pointer-events-none">
+                    <Checkbox checked={isSel} onChange={() => {}} id={`dd-${opt.replace(/\s+/g, '-')}`} />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{opt}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="text-xs text-slate-500 mt-2">
+          Select multiple products to apply the exact same audience settings to all of them at once.
+        </p>
+      </div>
+
       {/* Personas Chips */}
       <div className="flex flex-col">
         <label className="text-sm font-semibold text-slate-700 mb-1">
           Audience Personas <span className="text-blue-600">*</span>
         </label>
-        <p className="text-xs text-slate-500 mb-3">Select all that apply. Choosing a persona dynamically adjusts the age slider below.</p>
+        <p className="text-xs text-slate-500 mb-3">Select all that apply for <strong>{selectedProducts.join(', ')}</strong>.</p>
         
         <div className="flex flex-wrap gap-2">
           {PERSONAS_LIST.map((p) => {
-            const isSelected = audience.personas.includes(p.id);
+            const isSelected = currentData.personas.includes(p.id);
             return (
               <button
                 type="button"
@@ -68,7 +141,7 @@ export default function Step3Audience({
             );
           })}
         </div>
-        {errors.personas && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.personas}</span>}
+        {errors.productAudiences && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.productAudiences}</span>}
       </div>
 
       {/* Custom Double Range Slider */}
@@ -123,8 +196,8 @@ export default function Step3Audience({
         </label>
         <textarea
           id="lifestyle"
-          value={audience.lifestyleContext}
-          onChange={(e) => updateAudienceField('lifestyleContext', e.target.value)}
+          value={currentData.lifestyleContext || ''}
+          onChange={(e) => updateProductAudience(selectedProducts, 'lifestyleContext', e.target.value)}
           placeholder="Describe hobbies, behaviors, or details (e.g. loves outdoor sports, commutes daily, values clean labels)..."
           rows={3}
           className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-600/10"

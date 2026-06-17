@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Checkbox from './Checkbox';
 
 export default function Step2Product({
   products,
@@ -64,10 +65,8 @@ export default function Step2Product({
                       : 'bg-white border-slate-200 hover:border-slate-350'
                   }`}
                 >
-                  <div className={`w-5 h-5 border rounded flex items-center justify-center transition-all ${
-                    isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {isSelected && '✓'}
+                  <div className="pointer-events-none">
+                    <Checkbox checked={isSelected} onChange={() => {}} id={`cbx-${p.name.replace(/\s+/g, '-')}`} />
                   </div>
                   <span className="text-sm text-slate-700 font-semibold">{p.name}</span>
                 </div>
