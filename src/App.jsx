@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
+
 import CardProgressBar from './components/CardProgressBar';
 import Step1Brand from './components/Step1Brand';
 import Step2Product from './components/Step2Product';
@@ -38,7 +40,7 @@ const isValidUrl = (str) => {
 const defaultState = {
   brand: { name: '', url: '', industries: [], description: '', isScraped: false },
   products: { list: [], selected: [], offer: { hasOffer: false, description: '', isScraped: false }, isScraped: false },
-  audience: { productAudiences: { 'All Products': { personas: [], customPersonas: [], ageRange: [25, 44], lifestyleContext: '' } } },
+  audience: { personas: [], ageRange: [25, 44], lifestyleContext: '' },
   geography: { cities: [], specificAreas: '', budgetRange: '', goLiveDate: '', creativesStatus: '' },
   sessionId: generateId()
 };
@@ -225,37 +227,47 @@ export default function App() {
     }
   };
 
-  const updateProductAudience = (productNames, field, value) => {
-    const products = Array.isArray(productNames) ? productNames : [productNames];
+  const togglePersona = (pId) => {
+    const current = state.audience.personas;
+    const newPersonas = current.includes(pId)
+      ? current.filter((p) => p !== pId)
+      : [...current, pId];
 
-    setState((prevState) => {
-      const currentAudiences = { ...prevState.audience.productAudiences };
+    // Calculate dynamic age presets based on persona selection
+    const PERSONA_AGE_MAP = {
+      'Young professionals': [22, 35],
+      'Students': [18, 25],
+      'Fitness enthusiasts': [18, 45],
+      'Parents': [28, 50],
+      'HNI / affluent consumers': [35, 65],
+      'General audience': [18, 65]
+    };
 
-      products.forEach((productName) => {
-        const currentData = currentAudiences[productName] || { personas: [], customPersonas: [], ageRange: [25, 44], lifestyleContext: '' };
-        
-        let newValue = value;
-        if (typeof value === 'function') {
-          newValue = value(currentData[field]);
-        }
+    let minAge = 65;
+    let maxAge = 18;
 
-        currentAudiences[productName] = {
-          ...currentData,
-          [field]: newValue
-        };
-      });
-
-      return {
-        ...prevState,
-        audience: {
-          ...prevState.audience,
-          productAudiences: currentAudiences
-        }
-      };
+    newPersonas.forEach((p) => {
+      const range = PERSONA_AGE_MAP[p];
+      if (range) {
+        if (range[0] < minAge) minAge = range[0];
+        if (range[1] > maxAge) maxAge = range[1];
+      }
     });
 
-    if (errors.productAudiences) {
-      setErrors((prev) => ({ ...prev, productAudiences: '' }));
+    const calculatedRange = newPersonas.length > 0 ? [minAge, maxAge] : state.audience.ageRange;
+
+    const newState = {
+      ...state,
+      audience: {
+        ...state.audience,
+        personas: newPersonas,
+        ageRange: calculatedRange
+      }
+    };
+    saveState(newState);
+
+    if (errors.personas) {
+      setErrors((prev) => ({ ...prev, personas: '' }));
     }
   };
 
@@ -274,74 +286,34 @@ export default function App() {
   const fetchGeminiScrapeData = async (urlVal, apiKey) => {
     let webText = '';
 
-    // Helper: extract clean text from HTML string
-    const extractText = (html) => {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('script, style, noscript, svg, iframe, header, footer, nav, aside').forEach((el) => el.remove());
-      return (doc.body?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 7000);
-    };
-
-    // CORS proxy list — tried sequentially with fallback
-    const proxies = [
-      {
-        url: `https://corsproxy.io/?url=${encodeURIComponent(urlVal)}`,
-        extract: async (res) => extractText(await res.text())
-      },
-      {
-        url: `https://api.allorigins.win/get?url=${encodeURIComponent(urlVal)}`,
-        extract: async (res) => extractText((await res.json()).contents || '')
-      },
-      {
-        url: `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(urlVal)}`,
-        extract: async (res) => extractText(await res.text())
-      },
-      {
-        url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlVal)}`,
-        extract: async (res) => extractText(await res.text())
-      }
-    ];
-
-    // Try first two in parallel, then fall back sequentially to the rest
+    // Try CORS proxies in parallel to get html fast
     try {
-      webText = await Promise.any(
-        proxies.slice(0, 2).map(async ({ url, extract }) => {
-          const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-          if (!res.ok) throw new Error('Proxy failed');
-          const text = await extract(res);
-          if (!text || text.length < 50) throw new Error('No useful content');
-          return text;
-        })
-      );
-    } catch (_) {
-      // Sequential fallback through remaining proxies
-      for (const { url, extract } of proxies.slice(2)) {
-        try {
-          const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-          if (!res.ok) continue;
-          const text = await extract(res);
-          if (text && text.length >= 50) {
-            webText = text;
-            break;
-          }
-        } catch (_) {
-          continue;
-        }
-      }
+      const fetchWithProxy = async (proxyUrl, extractFn) => {
+        const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(2500) });
+        if (!proxyRes.ok) throw new Error('Proxy failed');
+        const text = await extractFn(proxyRes);
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        doc.querySelectorAll('script, style, noscript, svg, iframe, header, footer, nav').forEach((el) => el.remove());
+        const content = (doc.body.textContent || doc.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
+        if (!content) throw new Error('No content extracted');
+        return content;
+      };
+
+      webText = await Promise.any([
+        fetchWithProxy(`https://corsproxy.io/?url=${encodeURIComponent(urlVal)}`, res => res.text()),
+        fetchWithProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(urlVal)}`, async res => (await res.json()).contents)
+      ]);
+    } catch (err) {
+      console.warn('Scraping proxies failed or timed out, using URL alone.', err);
     }
 
-    if (!webText) {
-      console.warn('All scraping proxies failed — using URL/domain only for AI inference.');
-    }
-
-    const prompt = `You are an expert campaign onboarding assistant. The user provided the following website URL or brand name: "${urlVal}".
-If you can, search the web to find the official website URL for this brand. Analyze its content:
+    const prompt = `You are an expert campaign onboarding assistant. Analyze the website URL: "${urlVal}" and its raw text content:
 ---
-${webText || "No text could be extracted. Please infer brand details based purely on the brand name/URL provided."}
+${webText || "No text could be extracted. Please infer brand details based purely on the domain name."}
 ---
 
 Extract details and return ONLY a valid JSON object matching the following structure. Do NOT include markdown code blocks (like \`\`\`json):
 {
-  "brandUrl": "The exact official website URL (e.g. https://brand.com)",
   "brandName": "Official name of the brand",
   "description": "Short description of what they do or sell (must be under 160 characters)",
   "industries": ["Strictly select ONLY the most relevant industry categories (usually 1, maximum 2) from this list that directly describe the brand: F&B, Health & Wellness, Fashion, Beauty, Finance, EdTech, Retail, SaaS / Tech. Do not select multiple unrelated industries."],
@@ -363,14 +335,12 @@ Extract details and return ONLY a valid JSON object matching the following struc
         generationConfig: {
           responseMimeType: 'application/json'
         }
-      }),
-      signal: AbortSignal.timeout(20000)
+      })
     });
 
-    if (!res.ok) throw new Error('Gemini API call failed: ' + res.status);
+    if (!res.ok) throw new Error('Gemini API call failed');
     const json = await res.json();
-    const resultText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!resultText) throw new Error('Empty Gemini response');
+    const resultText = json.candidates[0].content.parts[0].text;
     return JSON.parse(resultText);
   };
 
@@ -378,12 +348,13 @@ Extract details and return ONLY a valid JSON object matching the following struc
   const triggerScrape = async () => {
     let urlVal = state.brand.url.trim();
     if (!urlVal) return;
-    
-    // Attempt normalization but don't force it to be a valid URL if it's just a keyword
-    if (isValidUrl(urlVal) || urlVal.includes('.')) {
-      urlVal = normalizeUrl(urlVal);
-    }
+    urlVal = normalizeUrl(urlVal);
     updateBrandField('url', urlVal);
+
+    if (!isValidUrl(urlVal)) {
+      setErrors((prev) => ({ ...prev, url: 'Please enter a valid URL (e.g. example.com)' }));
+      return;
+    }
 
     if (urlVal !== lastScrapedUrl) {
       resetScrapedData(urlVal);
@@ -430,17 +401,15 @@ Extract details and return ONLY a valid JSON object matching the following struc
       }
 
       // 3. Apply scraper outcomes
-      const finalUrl = data.brandUrl || (isValidUrl(urlVal) ? urlVal : `https://${urlVal.replace(/\s+/g, '').toLowerCase()}.com`);
-      
       const newState = {
         ...state,
         brand: {
           ...state.brand,
-          name: data.brandName || urlVal,
+          name: data.brandName || '',
           description: data.description || '',
           industries: data.industries || [],
           isScraped: true,
-          url: finalUrl
+          url: urlVal
         },
         products: {
           ...state.products,
@@ -479,13 +448,9 @@ Extract details and return ONLY a valid JSON object matching the following struc
     }
   };
 
-  const generateMockScrapeData = (input) => {
-    let domain = input.toLowerCase().replace(/\s+/g, '');
-    try {
-      if (isValidUrl(input)) domain = new URL(input).hostname.replace('www.', '');
-    } catch (_) {}
-    
-    const brandName = domain.split('.')[0] || input;
+  const generateMockScrapeData = (url) => {
+    const domain = new URL(url).hostname.replace('www.', '');
+    const brandName = domain.split('.')[0];
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
     const name = capitalize(brandName);
 
@@ -499,7 +464,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
     ];
     let activeOffers = [{ text: 'Get a 14-day free trial on any premium plan — no credit card required', cta: 'Start Free Trial' }];
 
-    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic|muscle|blaze/i.test(lowerDomain)) {
+    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic/i.test(lowerDomain)) {
       industry = 'Health & Wellness';
       description = `${name} offers premium quality health and wellness products designed to elevate your everyday physical performance and mental well-being.`;
       products = [
@@ -588,23 +553,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
     }
 
     if (step === 3) {
-      // Validate that either 'All Products' has personas, or all selected products have their own audiences configured.
-      const audiences = state.audience.productAudiences;
-      const allSelectedProducts = state.products.selected;
-      
-      let isValid = false;
-      
-      const hasPersonas = (data) => data && (data.personas.length > 0 || data.customPersonas.length > 0);
-      
-      if (hasPersonas(audiences['All Products'])) {
-        isValid = true;
-      } else if (allSelectedProducts.length > 0 && allSelectedProducts.every(p => hasPersonas(audiences[p]))) {
-        isValid = true;
-      }
-
-      if (!isValid) {
-        newErrors.productAudiences = 'Select at least one persona in "All Products", or configure personas for each selected product.';
-      }
+      if (!state.audience.personas.length) newErrors.personas = 'Select at least one audience persona';
     }
 
     if (step === 4) {
@@ -675,16 +624,13 @@ Extract details and return ONLY a valid JSON object matching the following struc
     });
   };
 
-  // Apply suggested chatbot updates — deep clone first to avoid nested mutation
+  // Apply suggested chatbot updates
   const applySuggestedUpdates = (updates) => {
-    let newState = JSON.parse(JSON.stringify(state));
+    let newState = { ...state };
     Object.entries(updates).forEach(([key, val]) => {
       const parts = key.split('.');
       let obj = newState;
       for (let i = 0; i < parts.length - 1; i++) {
-        if (obj[parts[i]] === undefined || obj[parts[i]] === null) {
-          obj[parts[i]] = {};
-        }
         obj = obj[parts[i]];
       }
       obj[parts[parts.length - 1]] = val;
@@ -693,39 +639,34 @@ Extract details and return ONLY a valid JSON object matching the following struc
   };
 
   return (
-    <div className="relative min-height-screen z-10 overflow-hidden">
-      {/* Blurred background blobs inspired by Adometer problem section */}
-      <div className="pointer-events-none fixed inset-0 z-[-1] overflow-hidden">
-        <div className="absolute left-[-12%] top-[8%] h-[440px] w-[440px] rounded-full bg-blue-100/70 blur-[120px]" />
-        <div className="absolute right-[-10%] top-[18%] h-[520px] w-[520px] rounded-full bg-cyan-100/60 blur-[130px]" />
-        <div className="absolute left-[30%] bottom-[-20%] h-[420px] w-[420px] rounded-full bg-purple-100/40 blur-[130px]" />
-      </div>
+    <div className="adometer-form-page form-shell-bg">
       {/* Toast notifications */}
-      <div className="fixed top-[76px] right-5 z-[500] flex flex-col gap-2 pointer-events-none">
+      <div className="adometer-toast-wrap">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`px-4 py-3 border rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md transition-all duration-300 pointer-events-auto flex items-center gap-2 ${t.type === 'success'
-              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-600'
-              : t.type === 'error'
-                ? 'bg-red-50/90 border-red-200 text-red-600'
-                : 'bg-white/95 border-slate-200 text-blue-600'
-              }`}
+            className={`adometer-toast ${
+              t.type === 'success'
+                ? 'adometer-toast-success'
+                : t.type === 'error'
+                  ? 'adometer-toast-error'
+                  : 'adometer-toast-info'
+            }`}
           >
             <span>{t.msg}</span>
           </div>
         ))}
       </div>
 
-      <header className="sticky top-0 z-40 bg-slate-950/85 border-b border-slate-800/50 backdrop-blur-lg px-6 py-3.5 shadow-lg shadow-slate-950/10">
-        <div className="max-w-[900px] mx-auto flex items-center justify-between">
+      <header className="adometer-form-header">
+        <div className="adometer-form-header-inner">
           <div className="flex items-center gap-2">
-            <img src={adometerLogo} alt="Adometer" className="h-7 w-auto object-contain" />
+          <img src={adometerLogo} alt="Adometer" className="adometer-logo" />
           </div>
           {!isSubmitted && (
             <button
               onClick={saveAndContinue}
-              className="flex items-center gap-1 bg-none border-none text-[11px] text-slate-400 font-bold hover:text-cyan-400 cursor-pointer transition-all"
+              className="adometer-save-btn"
             >
               💾 Save &amp; Continue Later
             </button>
@@ -734,35 +675,48 @@ Extract details and return ONLY a valid JSON object matching the following struc
       </header>
 
       {/* Main Container */}
-      <main className="max-w-[780px] mx-auto px-4 py-10 pb-24">
+      <main className="adometer-main">
         {showWelcome ? (
-          <section className="glass-panel glass-panel-hover rounded-[1.75rem] p-10 md:p-14 text-center max-w-[850px] mx-auto animate-fadeIn relative z-10 my-12">
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-950 leading-snug mb-6 max-w-[720px] mx-auto">
-              Before we design the perfect campaign for you, <br />
-              <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-500 bg-clip-text text-transparent">
-                we would need a few more details
+          <section className="adometer-welcome animate-fadeIn">
+            <div className="adometer-eyebrow">
+              Premium DOOH Campaign Brief
+            </div>
+
+            <h1 className="adometer-welcome-title">
+              Build your campaign for <br />
+              <span className="adometer-gradient-text">
+                premium Delhi NCR spaces
               </span>
             </h1>
-            <p className="text-base sm:text-lg text-slate-600 font-semibold max-w-[600px] leading-relaxed mb-10 mx-auto">
-              Please fill out this short form or share your answers with our chatbot to get started!
+
+            <p className="adometer-welcome-subtitle">
+              Tell us about your brand, audience, budget, and creatives. We’ll help shape a campaign brief for high-intent audiences across gyms, offices, supermarkets, and sports arenas.
             </p>
 
-            <div className="flex gap-10 flex-wrap justify-center mb-10">
-              <div className="text-center px-6 py-4 bg-white/50 rounded-2xl border border-slate-200/60 shadow-sm inline-block">
-                <div className="text-2xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">5 min</div>
-                <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">Avg completion time</div>
+            <div className="adometer-stats">
+              <div className="text-center">
+              <div className="adometer-stat-value adometer-gradient-text">50+</div>
+              <div className="adometer-stat-label">Screens</div>
+              </div>
+              <div className="text-center">
+                <div className="adometer-stat-value adometer-gradient-text">60%</div>
+                <div className="adometer-stat-label">Fields auto-filled</div>
+              </div>
+              <div className="text-center">
+                <div className="adometer-stat-value adometer-gradient-text">AI</div>
+                <div className="adometer-stat-label">Guided experience</div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 justify-center">
+            <div className="adometer-actions">
               <button
                 onClick={() => {
                   setShowWelcome(false);
                   setState(defaultState); // Starts with completely empty form
                 }}
-                className="px-8 py-3.5 bg-cyan-300 text-slate-950 font-bold rounded-full shadow-lg shadow-cyan-300/20 hover:bg-purple-200 transition-colors cursor-pointer text-sm"
+                className="adometer-primary-btn"
               >
-                ✦ Start Campaign Brief →
+                ✦ Plan My Campaign →
               </button>
               <button
                 onClick={() => {
@@ -770,18 +724,18 @@ Extract details and return ONLY a valid JSON object matching the following struc
                   setState(defaultState); // Starts with completely empty form
                   setChatOpen(true);
                 }}
-                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm cursor-pointer"
+                className="adometer-secondary-btn"
               >
-                💬 Fill via chat instead
+                💬 Get guided help
               </button>
             </div>
           </section>
         ) : isSubmitted ? (
-          <div className="glass-panel rounded-3xl p-8">
+          <div className="glass-panel adometer-form-card">
             <ConfirmationPage briefId={briefId} />
           </div>
         ) : (
-          <div className="glass-panel glass-panel-hover rounded-3xl p-8 transition-shadow duration-300 relative overflow-hidden">
+          <div className="glass-panel glass-panel-hover adometer-form-card">
             <CardProgressBar
               currentStep={currentStep}
               stepsCount={5}
@@ -815,8 +769,8 @@ Extract details and return ONLY a valid JSON object matching the following struc
               {currentStep === 3 && (
                 <Step3Audience
                   audience={state.audience}
-                  products={state.products.selected}
-                  updateProductAudience={updateProductAudience}
+                  updateAudienceField={updateAudienceField}
+                  togglePersona={togglePersona}
                   errors={errors}
                 />
               )}
@@ -842,19 +796,19 @@ Extract details and return ONLY a valid JSON object matching the following struc
 
             {/* Bottom Nav Row */}
             {currentStep < 5 && (
-              <div className="flex justify-between items-center mt-9 pt-6 border-t border-slate-200/60">
+              <div className="adometer-bottom-nav">
                 <button
                   type="button"
                   onClick={handleBack}
                   disabled={currentStep === 1}
-                  className="px-5 py-2.5 bg-white border border-slate-200 text-xs font-semibold text-slate-600 rounded-xl hover:border-blue-600 hover:text-blue-600 disabled:opacity-50 transition-all cursor-pointer"
+                  className="adometer-secondary-btn adometer-back-btn"
                 >
                   ← Back
                 </button>
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-6 py-2.5 bg-gradient-to-r from-blue-900 to-blue-600 text-white border-none text-xs font-bold rounded-xl hover:shadow-md hover:shadow-blue-500/10 cursor-pointer transition-all"
+                  className="adometer-primary-btn adometer-next-btn"
                 >
                   Continue →
                 </button>
@@ -872,10 +826,6 @@ Extract details and return ONLY a valid JSON object matching the following struc
           state={state}
           applySuggestedUpdates={applySuggestedUpdates}
           addToast={addToast}
-          currentStep={currentStep}
-          setCurrentStep={setCurrentStep}
-          triggerScrape={triggerScrape}
-          setShowWelcome={setShowWelcome}
         />
       )}
     </div>

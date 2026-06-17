@@ -1,52 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --adometer-midnight: #020617;
+    --adometer-navy: #060B18;
+    --adometer-deep-navy: #0F1F3D;
+    --adometer-blue: #2563EB;
+    --adometer-light-blue: #60A5FA;
+    --adometer-cyan: #22D3EE;
+    --adometer-purple: #A855F7;
+    --adometer-purple-deep: #7C3AED;
+
+    --heading: #020617;
+    --body: #64748B;
+    --ink: #1E293B;
+    --border: rgba(148, 163, 184, 0.25);
+    --card: rgba(255, 255, 255, 0.82);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    font-family: 'Geist', system-ui, sans-serif;
-    background: #fbfdff;
-    color: #020617;
+    margin: 0;
     min-height: 100vh;
+    font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: var(--heading);
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
   }
 
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: -2;
-    background:
-      radial-gradient(circle at 15% 50%, rgba(37,99,235,0.20), transparent 45%),
-      radial-gradient(circle at 85% 30%, rgba(8,145,178,0.20), transparent 45%),
-      radial-gradient(circle at 50% 80%, rgba(147,51,234,0.12), transparent 50%),
-      linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
+    z-index: -3;
     pointer-events: none;
+    background:
+      radial-gradient(circle at 14% 18%, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at 86% 18%, rgba(96, 165, 250, 0.09), transparent 32%),
+      radial-gradient(circle at 50% 88%, rgba(168, 85, 247, 0.08), transparent 36%),
+      linear-gradient(180deg, #ffffff 0%, #f8fbff 44%, #f1f5f9 100%);
   }
 
   body::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: -1;
-    background: rgba(255, 255, 255, 0.35);
-    backdrop-filter: blur(60px);
-    -webkit-backdrop-filter: blur(60px);
+    z-index: -2;
     pointer-events: none;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.80));
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: rgba(37, 99, 235, 0.18);
+    color: #020617;
   }
 }
 
-/* ── Custom Utilities for Glassmorphism & Themes ── */
+/* Adometer reusable UI classes */
+
+.adometer-gradient-text {
+  display: inline-block;
+  background: linear-gradient(90deg, #0F1F3D 0%, #2563EB 52%, #60A5FA 74%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 6px;
+}
+
+.adometer-dark-gradient-text {
+  background: linear-gradient(90deg, #ffffff 0%, #93c5fd 45%, #22D3EE 72%, #A855F7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(203, 213, 225, 0.8);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 20px 55px rgba(15, 39, 68, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border-radius: 1.75rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.78));
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  box-shadow:
+    0 24px 80px rgba(15, 31, 61, 0.12),
+    0 2px 10px rgba(15, 31, 61, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .glass-panel-hover:hover {
-  box-shadow: 0 30px 75px rgba(37, 99, 235, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  border-color: rgba(165, 243, 252, 0.8); /* cyan-200 */
+  box-shadow:
+    0 32px 95px rgba(37, 99, 235, 0.16),
+    0 4px 18px rgba(15, 31, 61, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.adometer-card {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 24px;
+  box-shadow: 0 18px 45px rgba(15, 31, 61, 0.08);
+}
+
+.adometer-card-dark {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(37,99,235,0.22), transparent 34%),
+    radial-gradient(circle at 90% 20%, rgba(34,211,238,0.14), transparent 30%),
+    linear-gradient(135deg, #020617 0%, #060B18 52%, #0F1F3D 100%);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  box-shadow: 0 28px 85px rgba(2, 6, 23, 0.30);
+}
+
+.adometer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.adometer-primary-btn {
+  border: 0;
+  color: white;
+  border-radius: 999px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #2563EB 0%, #3B82F6 48%, #7C3AED 100%);
+  box-shadow: 0 16px 38px rgba(37, 99, 235, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.adometer-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 50px rgba(37, 99, 235, 0.34);
+  filter: saturate(1.08);
+}
+
+.adometer-secondary-btn {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  color: #0F1F3D;
+  border-radius: 999px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 12px 30px rgba(15, 31, 61, 0.07);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.adometer-secondary-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.38);
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.13);
+}
+
+.form-shell-bg {
+  min-height: 100vh;
 }
 
 .form-shell-bg::before {
@@ -54,11 +183,11 @@
   position: fixed;
   inset: 0;
   z-index: -1;
+  pointer-events: none;
   background:
-    radial-gradient(circle at 18% 18%, rgba(37,99,235,0.08), transparent 30%),
-    radial-gradient(circle at 82% 45%, rgba(8,145,178,0.08), transparent 34%),
-    radial-gradient(circle at 50% 78%, rgba(37,99,235,0.16), transparent 36%),
-    linear-gradient(180deg, #f0f7ff 0%, #e8f1fb 50%, #dce8f6 100%);
+    radial-gradient(circle at 16% 24%, rgba(37, 99, 235, 0.08), transparent 32%),
+    radial-gradient(circle at 84% 42%, rgba(96, 165, 250, 0.045), transparent 34%),
+    radial-gradient(circle at 52% 86%, rgba(168, 85, 247, 0.055), transparent 36%);
 }
 
 .spin-slow {
@@ -66,17 +195,217 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease both;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================= */
+/* ADOMETER WEBSITE THEME OVERRIDE */
+/* ============================= */
+
+:root {
+  --adometer-midnight: #020617;
+  --adometer-navy: #060B18;
+  --adometer-deep-navy: #0F1F3D;
+  --adometer-blue: #2563EB;
+  --adometer-blue-light: #60A5FA;
+  --adometer-cyan: #22D3EE;
+  --adometer-purple: #7C3AED;
+  --adometer-ink: #1E293B;
+  --adometer-slate: #64748B;
+  --adometer-soft: #F8FAFC;
+}
+
+/* Fix gradient text getting cut, including “under 5 minutes” */
+.adometer-gradient-text {
+  display: inline-block;
+  line-height: 1.18;
+  padding-bottom: 0.12em;
+  overflow: visible;
+  background: linear-gradient(
+    90deg,
+    #0F1F3D 0%,
+    #2563EB 42%,
+    #60A5FA 66%,
+    #7C3AED 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.adometer-dark-gradient-text {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #93c5fd 42%,
+    #22d3ee 68%,
+    #a855f7 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Overall page background */
+.form-shell-bg {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.15), transparent 30%),
+    radial-gradient(circle at 88% 14%, rgba(124, 58, 237, 0.12), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 46%, #f1f5f9 100%);
+}
+
+/* Premium floating-glass card */
+.glass-panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.82));
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow:
+    0 30px 90px rgba(15, 31, 61, 0.13),
+    0 2px 10px rgba(15, 31, 61, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.glass-panel-hover:hover {
+  box-shadow:
+    0 34px 105px rgba(37, 99, 235, 0.17),
+    0 6px 22px rgba(15, 31, 61, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+/* Form typography polish */
+.adometer-form-card h2 {
+  color: var(--adometer-midnight);
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+
+.adometer-form-card p {
+  color: var(--adometer-slate);
+  font-weight: 600;
+}
+
+/* Section labels like “Section 1” */
+.adometer-form-card span[class*="text-cyan-600"] {
+  color: var(--adometer-blue) !important;
+  letter-spacing: 0.15em;
+}
+
+/* Inputs and textareas */
+.adometer-form-card input[type="text"],
+.adometer-form-card input[type="date"],
+.adometer-form-card textarea {
+  background: rgba(255, 255, 255, 0.84) !important;
+  border-color: rgba(148, 163, 184, 0.30) !important;
+  color: var(--adometer-midnight) !important;
+  border-radius: 18px !important;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(15, 31, 61, 0.04);
+}
+
+.adometer-form-card input[type="text"]:focus,
+.adometer-form-card input[type="date"]:focus,
+.adometer-form-card textarea:focus {
+  background: #ffffff !important;
+  border-color: rgba(37, 99, 235, 0.62) !important;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.11),
+    0 14px 34px rgba(37, 99, 235, 0.09) !important;
+}
+
+/* Labels */
+.adometer-form-card label {
+  color: var(--adometer-deep-navy) !important;
+  font-weight: 850;
+}
+
+/* Make selectable cards/chips look premium */
+.adometer-form-card button,
+.adometer-form-card [role="button"] {
+  font-family: inherit;
+}
+
+/* Selected blue cards */
+.adometer-form-card .bg-blue-50\/40 {
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.11), rgba(34, 211, 238, 0.06), rgba(124, 58, 237, 0.06)) !important;
+}
+
+/* Selected blue buttons/chips */
+.adometer-form-card .bg-blue-600 {
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 48%, #7c3aed 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.18);
+}
+
+/* Product / budget / creative option cards */
+.adometer-form-card .rounded-xl {
+  border-radius: 18px;
+}
+
+/* Hover card border */
+.adometer-form-card .hover\:border-slate-300:hover {
+  border-color: rgba(37, 99, 235, 0.38) !important;
+}
+
+/* Error text */
+.adometer-form-card .text-red-500,
+.adometer-form-card .text-red-500,
+.adometer-form-card .text-red-600 {
+  color: #dc2626 !important;
+}
+
+/* Success text */
+.adometer-form-card .text-emerald-600 {
+  color: #059669 !important;
+}
+
+/* Tiny muted text */
+.adometer-form-card .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Invalid custom class fallback */
+.adometer-form-card .text-blue-600 {
+  color: #2563eb !important;
 }

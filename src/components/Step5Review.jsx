@@ -30,9 +30,11 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <span className="text-sm font-semibold text-cyan-600 uppercase tracking-[0.3em] block mb-1">Section 5</span>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Review &amp; Submit</h2>
-        <p className="text-sm text-slate-500 mt-1">Check everything looks correct before sending your brief to our team.</p>
+        <span className="text-[11px] font-bold text-cyan-600 uppercase tracking-widest block mb-1">Section 5</span>
+        <h2 className="text-xl font-bold text-slate-900">Review your campaign brief</h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Confirm the details before sending this to the Adometer team.
+        </p>
       </div>
 
       <div className="space-y-5">
@@ -43,7 +45,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(1)}
-              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -79,7 +81,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(2)}
-              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -109,54 +111,30 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(3)}
-              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
             >
               Edit
             </button>
           </div>
-          <div className="flex flex-col gap-3">
-            {Object.entries(state.audience.productAudiences || {}).map(([prod, aud]) => {
-              const hasPersonas = aud.personas?.length > 0 || aud.customPersonas?.length > 0;
-              const hasContext = aud.lifestyleContext?.trim();
-              if (!hasPersonas && !hasContext) return null;
-
-              return (
-                <div key={prod} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
-                  <div className="text-[11px] font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2">
-                    {prod === 'All Products' ? '🌐 All Products' : `📦 ${prod}`}
-                  </div>
-                  
-                  <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
-                    <div className="text-slate-400 font-semibold">Personas</div>
-                    <div className="flex flex-wrap gap-1">
-                      {[...(aud.personas || []), ...(aud.customPersonas || [])].map((p) => (
-                        <span key={p} className="bg-slate-50 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
-                    <div className="text-slate-400 font-semibold">Age Target</div>
-                    <div className="text-slate-800 font-bold">
-                      {(aud.ageRange || [25, 44])[0]} — {(aud.ageRange || [25, 44])[1] === 65 ? '65+' : (aud.ageRange || [25, 44])[1]} years
-                    </div>
-                  </div>
-                  
-                  {hasContext && (
-                    <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
-                      <div className="text-slate-400 font-semibold">Lifestyle</div>
-                      <div className="text-slate-700 leading-relaxed break-words">{aud.lifestyleContext}</div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {(!state.audience.productAudiences || Object.keys(state.audience.productAudiences).length === 0) && (
-              <span className="text-xs text-slate-500">—</span>
-            )}
+          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
+            <div className="text-slate-400 font-semibold">Personas</div>
+            <div className="flex flex-wrap gap-1">
+              {state.audience.personas.map((p) => (
+                <span key={p} className="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                  {p}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
+            <div className="text-slate-400 font-semibold">Age Target</div>
+            <div className="text-slate-800 font-bold">
+              {state.audience.ageRange[0]} — {state.audience.ageRange[1] === 65 ? '65+' : state.audience.ageRange[1]} years
+            </div>
+          </div>
+          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
+            <div className="text-slate-400 font-semibold">Lifestyle context</div>
+            <div className="text-slate-700 leading-relaxed break-words">{state.audience.lifestyleContext || '—'}</div>
           </div>
         </div>
 
@@ -167,7 +145,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(4)}
-              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
+              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -206,15 +184,15 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
           type="button"
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="px-8 py-3.5 bg-cyan-300 text-slate-950 hover:bg-purple-200 hover:shadow-lg hover:shadow-cyan-300/20 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center justify-center min-w-[140px]"
+          className="px-8 py-3 bg-gradient-to-r from-blue-950 to-blue-600 hover:shadow-lg hover:shadow-blue-500/15 disabled:bg-slate-300 disabled:shadow-none text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center min-w-[140px]"
         >
           {isSubmitting ? (
             <>
-              <span className="inline-block w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin mr-2" />
+              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
               Submitting...
             </>
           ) : (
-            'Submit Campaign Brief ✦'
+            'Submit Campaign Brief ✓'
           )}
         </button>
       </div>

@@ -41,9 +41,11 @@ export default function Step4Geography({
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <span className="text-sm font-semibold text-cyan-600 uppercase tracking-[0.3em] block mb-1">Section 4</span>
-        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Geography &amp; Budget</h2>
-        <p className="text-sm text-slate-500 mt-1">Where should your ads run and how much would you like to invest?</p>
+        <span className="text-[11px] font-bold text-cyan-600 uppercase tracking-widest block mb-1">Section 4</span>
+        <h2 className="text-xl font-bold text-slate-900">Locations, budget &amp; launch plan</h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Choose where your campaign should run and how soon you want to go live.
+        </p>
       </div>
 
       {/* Target Cities Chips */}
@@ -61,10 +63,10 @@ export default function Step4Geography({
                 type="button"
                 key={city}
                 onClick={() => toggleCity(city)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                   isSelected
-                    ? 'bg-cyan-600 border-cyan-600 text-white shadow-sm shadow-cyan-500/20'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-350'
                 }`}
               >
                 📍 {city}
@@ -86,7 +88,7 @@ export default function Step4Geography({
           value={geography.specificAreas}
           onChange={(e) => updateGeographyField('specificAreas', e.target.value)}
           placeholder="e.g. DLF Phase 3, Sector 62, GK 2, or leave blank for all"
-          className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:border-cyan-500 focus:ring-3 focus:ring-cyan-500/20"
+          className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-600/10"
         />
       </div>
 
@@ -105,14 +107,14 @@ export default function Step4Geography({
                 onClick={() => updateGeographyField('budgetRange', budget.id)}
                 className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-cyan-50/40 border-cyan-500 shadow-sm shadow-cyan-500/10'
+                    ? 'bg-blue-50/40 border-blue-600 shadow-sm'
                     : 'bg-white border-slate-200 hover:border-slate-350'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                  isSelected ? 'border-cyan-600' : 'border-slate-300'
+                  isSelected ? 'border-blue-600' : 'border-slate-300'
                 }`}>
-                  {isSelected && <div className="w-2 h-2 rounded-full bg-cyan-600" />}
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-blue-600" />}
                 </div>
                 <span className="text-xs text-slate-700 font-semibold">{budget.label}</span>
               </div>
@@ -133,7 +135,7 @@ export default function Step4Geography({
           min={minDate}
           value={geography.goLiveDate}
           onChange={(e) => updateGeographyField('goLiveDate', e.target.value)}
-          className="w-full max-w-[240px] px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:border-cyan-500 focus:ring-3 focus:ring-cyan-500/20"
+          className="w-full max-w-[240px] px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-3 focus:ring-blue-600/10"
         />
         <span className="text-[10px] text-slate-450 font-bold mt-1">Requires min. 3 business days for setup (earliest available: {minDate})</span>
         {errors.goLiveDate && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.goLiveDate}</span>}
@@ -154,14 +156,14 @@ export default function Step4Geography({
                 onClick={() => updateGeographyField('creativesStatus', c.id)}
                 className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-cyan-50/40 border-cyan-500 shadow-sm shadow-cyan-500/10'
+                    ? 'bg-blue-50/40 border-blue-600 shadow-sm'
                     : 'bg-white border-slate-200 hover:border-slate-350'
                 }`}
               >
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                  isSelected ? 'border-cyan-600' : 'border-slate-300'
+                  isSelected ? 'border-blue-600' : 'border-slate-300'
                 }`}>
-                  {isSelected && <div className="w-2 h-2 rounded-full bg-cyan-600" />}
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-blue-600" />}
                 </div>
                 <span className="text-xs text-slate-700 font-semibold">{c.label}</span>
               </div>
