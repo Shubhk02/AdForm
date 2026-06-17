@@ -736,32 +736,21 @@ Extract details and return ONLY a valid JSON object matching the following struc
       {/* Main Container */}
       <main className="max-w-[780px] mx-auto px-4 py-10 pb-24">
         {showWelcome ? (
-          <section className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12 text-center max-w-[850px] mx-auto animate-fadeIn relative z-10">
-            <div className="inline-flex items-center gap-1.5 bg-blue-50/60 border border-blue-200/50 rounded-full px-4 py-1.5 text-[11px] font-bold text-cyan-600 uppercase tracking-[0.3em] mb-8">
-              AI-Powered Campaign Brief
-            </div>
-            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-slate-950 leading-[1.08] mb-6 max-w-[720px]">
-              Launch your campaign <br />
+          <section className="glass-panel glass-panel-hover rounded-[1.75rem] p-10 md:p-14 text-center max-w-[850px] mx-auto animate-fadeIn relative z-10 my-12">
+            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-950 leading-snug mb-6 max-w-[720px] mx-auto">
+              Before we design the perfect campaign for you, <br />
               <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-500 bg-clip-text text-transparent">
-                in under 5 minutes
+                we would need a few more details
               </span>
             </h1>
-            <p className="text-base sm:text-xl text-slate-600 font-semibold max-w-[540px] leading-relaxed mb-12">
-              Our intelligent form auto-fills fields from your website and guides you through the process with an AI assistant — no jargon, no complexity.
+            <p className="text-base sm:text-lg text-slate-600 font-semibold max-w-[600px] leading-relaxed mb-10 mx-auto">
+              Please fill out this short form or share your answers with our chatbot to get started!
             </p>
 
-            <div className="flex gap-10 flex-wrap justify-center mb-12">
-              <div className="text-center">
-                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">5 min</div>
-                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Avg completion time</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">60%</div>
-                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Fields auto-filled</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">AI</div>
-                <div className="text-xs font-bold text-slate-500 mt-1.5 uppercase tracking-wide">Guided experience</div>
+            <div className="flex gap-10 flex-wrap justify-center mb-10">
+              <div className="text-center px-6 py-4 bg-white/50 rounded-2xl border border-slate-200/60 shadow-sm inline-block">
+                <div className="text-2xl font-extrabold bg-gradient-to-r from-blue-900 to-cyan-600 bg-clip-text text-transparent">5 min</div>
+                <div className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wide">Avg completion time</div>
               </div>
             </div>
 
