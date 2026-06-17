@@ -38,7 +38,7 @@ const isValidUrl = (str) => {
 const defaultState = {
   brand: { name: '', url: '', industries: [], description: '', isScraped: false },
   products: { list: [], selected: [], offer: { hasOffer: false, description: '', isScraped: false }, isScraped: false },
-  audience: { personas: [], ageRange: [25, 44], lifestyleContext: '' },
+  audience: { productAudiences: { 'All Products': { personas: [], customPersonas: [], ageRange: [25, 44], lifestyleContext: '' } } },
   geography: { cities: [], specificAreas: '', budgetRange: '', goLiveDate: '', creativesStatus: '' },
   sessionId: generateId()
 };
@@ -225,47 +225,37 @@ export default function App() {
     }
   };
 
-  const togglePersona = (pId) => {
-    const current = state.audience.personas;
-    const newPersonas = current.includes(pId)
-      ? current.filter((p) => p !== pId)
-      : [...current, pId];
+  const updateProductAudience = (productNames, field, value) => {
+    const products = Array.isArray(productNames) ? productNames : [productNames];
 
-    // Calculate dynamic age presets based on persona selection
-    const PERSONA_AGE_MAP = {
-      'Young professionals': [22, 35],
-      'Students': [18, 25],
-      'Fitness enthusiasts': [18, 45],
-      'Parents': [28, 50],
-      'HNI / affluent consumers': [35, 65],
-      'General audience': [18, 65]
-    };
+    setState((prevState) => {
+      const currentAudiences = { ...prevState.audience.productAudiences };
 
-    let minAge = 65;
-    let maxAge = 18;
+      products.forEach((productName) => {
+        const currentData = currentAudiences[productName] || { personas: [], customPersonas: [], ageRange: [25, 44], lifestyleContext: '' };
+        
+        let newValue = value;
+        if (typeof value === 'function') {
+          newValue = value(currentData[field]);
+        }
 
-    newPersonas.forEach((p) => {
-      const range = PERSONA_AGE_MAP[p];
-      if (range) {
-        if (range[0] < minAge) minAge = range[0];
-        if (range[1] > maxAge) maxAge = range[1];
-      }
+        currentAudiences[productName] = {
+          ...currentData,
+          [field]: newValue
+        };
+      });
+
+      return {
+        ...prevState,
+        audience: {
+          ...prevState.audience,
+          productAudiences: currentAudiences
+        }
+      };
     });
 
-    const calculatedRange = newPersonas.length > 0 ? [minAge, maxAge] : state.audience.ageRange;
-
-    const newState = {
-      ...state,
-      audience: {
-        ...state.audience,
-        personas: newPersonas,
-        ageRange: calculatedRange
-      }
-    };
-    saveState(newState);
-
-    if (errors.personas) {
-      setErrors((prev) => ({ ...prev, personas: '' }));
+    if (errors.productAudiences) {
+      setErrors((prev) => ({ ...prev, productAudiences: '' }));
     }
   };
 
@@ -284,34 +274,74 @@ export default function App() {
   const fetchGeminiScrapeData = async (urlVal, apiKey) => {
     let webText = '';
 
-    // Try CORS proxies in parallel to get html fast
-    try {
-      const fetchWithProxy = async (proxyUrl, extractFn) => {
-        const proxyRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(2500) });
-        if (!proxyRes.ok) throw new Error('Proxy failed');
-        const text = await extractFn(proxyRes);
-        const doc = new DOMParser().parseFromString(text, 'text/html');
-        doc.querySelectorAll('script, style, noscript, svg, iframe, header, footer, nav').forEach((el) => el.remove());
-        const content = (doc.body.textContent || doc.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 6000);
-        if (!content) throw new Error('No content extracted');
-        return content;
-      };
+    // Helper: extract clean text from HTML string
+    const extractText = (html) => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('script, style, noscript, svg, iframe, header, footer, nav, aside').forEach((el) => el.remove());
+      return (doc.body?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 7000);
+    };
 
-      webText = await Promise.any([
-        fetchWithProxy(`https://corsproxy.io/?url=${encodeURIComponent(urlVal)}`, res => res.text()),
-        fetchWithProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(urlVal)}`, async res => (await res.json()).contents)
-      ]);
-    } catch (err) {
-      console.warn('Scraping proxies failed or timed out, using URL alone.', err);
+    // CORS proxy list — tried sequentially with fallback
+    const proxies = [
+      {
+        url: `https://corsproxy.io/?url=${encodeURIComponent(urlVal)}`,
+        extract: async (res) => extractText(await res.text())
+      },
+      {
+        url: `https://api.allorigins.win/get?url=${encodeURIComponent(urlVal)}`,
+        extract: async (res) => extractText((await res.json()).contents || '')
+      },
+      {
+        url: `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(urlVal)}`,
+        extract: async (res) => extractText(await res.text())
+      },
+      {
+        url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlVal)}`,
+        extract: async (res) => extractText(await res.text())
+      }
+    ];
+
+    // Try first two in parallel, then fall back sequentially to the rest
+    try {
+      webText = await Promise.any(
+        proxies.slice(0, 2).map(async ({ url, extract }) => {
+          const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+          if (!res.ok) throw new Error('Proxy failed');
+          const text = await extract(res);
+          if (!text || text.length < 50) throw new Error('No useful content');
+          return text;
+        })
+      );
+    } catch (_) {
+      // Sequential fallback through remaining proxies
+      for (const { url, extract } of proxies.slice(2)) {
+        try {
+          const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+          if (!res.ok) continue;
+          const text = await extract(res);
+          if (text && text.length >= 50) {
+            webText = text;
+            break;
+          }
+        } catch (_) {
+          continue;
+        }
+      }
     }
 
-    const prompt = `You are an expert campaign onboarding assistant. Analyze the website URL: "${urlVal}" and its raw text content:
+    if (!webText) {
+      console.warn('All scraping proxies failed — using URL/domain only for AI inference.');
+    }
+
+    const prompt = `You are an expert campaign onboarding assistant. The user provided the following website URL or brand name: "${urlVal}".
+If you can, search the web to find the official website URL for this brand. Analyze its content:
 ---
-${webText || "No text could be extracted. Please infer brand details based purely on the domain name."}
+${webText || "No text could be extracted. Please infer brand details based purely on the brand name/URL provided."}
 ---
 
 Extract details and return ONLY a valid JSON object matching the following structure. Do NOT include markdown code blocks (like \`\`\`json):
 {
+  "brandUrl": "The exact official website URL (e.g. https://brand.com)",
   "brandName": "Official name of the brand",
   "description": "Short description of what they do or sell (must be under 160 characters)",
   "industries": ["Strictly select ONLY the most relevant industry categories (usually 1, maximum 2) from this list that directly describe the brand: F&B, Health & Wellness, Fashion, Beauty, Finance, EdTech, Retail, SaaS / Tech. Do not select multiple unrelated industries."],
@@ -333,12 +363,14 @@ Extract details and return ONLY a valid JSON object matching the following struc
         generationConfig: {
           responseMimeType: 'application/json'
         }
-      })
+      }),
+      signal: AbortSignal.timeout(20000)
     });
 
-    if (!res.ok) throw new Error('Gemini API call failed');
+    if (!res.ok) throw new Error('Gemini API call failed: ' + res.status);
     const json = await res.json();
-    const resultText = json.candidates[0].content.parts[0].text;
+    const resultText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!resultText) throw new Error('Empty Gemini response');
     return JSON.parse(resultText);
   };
 
@@ -346,13 +378,12 @@ Extract details and return ONLY a valid JSON object matching the following struc
   const triggerScrape = async () => {
     let urlVal = state.brand.url.trim();
     if (!urlVal) return;
-    urlVal = normalizeUrl(urlVal);
-    updateBrandField('url', urlVal);
-
-    if (!isValidUrl(urlVal)) {
-      setErrors((prev) => ({ ...prev, url: 'Please enter a valid URL (e.g. example.com)' }));
-      return;
+    
+    // Attempt normalization but don't force it to be a valid URL if it's just a keyword
+    if (isValidUrl(urlVal) || urlVal.includes('.')) {
+      urlVal = normalizeUrl(urlVal);
     }
+    updateBrandField('url', urlVal);
 
     if (urlVal !== lastScrapedUrl) {
       resetScrapedData(urlVal);
@@ -399,15 +430,17 @@ Extract details and return ONLY a valid JSON object matching the following struc
       }
 
       // 3. Apply scraper outcomes
+      const finalUrl = data.brandUrl || (isValidUrl(urlVal) ? urlVal : `https://${urlVal.replace(/\s+/g, '').toLowerCase()}.com`);
+      
       const newState = {
         ...state,
         brand: {
           ...state.brand,
-          name: data.brandName || '',
+          name: data.brandName || urlVal,
           description: data.description || '',
           industries: data.industries || [],
           isScraped: true,
-          url: urlVal
+          url: finalUrl
         },
         products: {
           ...state.products,
@@ -446,9 +479,13 @@ Extract details and return ONLY a valid JSON object matching the following struc
     }
   };
 
-  const generateMockScrapeData = (url) => {
-    const domain = new URL(url).hostname.replace('www.', '');
-    const brandName = domain.split('.')[0];
+  const generateMockScrapeData = (input) => {
+    let domain = input.toLowerCase().replace(/\s+/g, '');
+    try {
+      if (isValidUrl(input)) domain = new URL(input).hostname.replace('www.', '');
+    } catch (_) {}
+    
+    const brandName = domain.split('.')[0] || input;
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
     const name = capitalize(brandName);
 
@@ -462,7 +499,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
     ];
     let activeOffers = [{ text: 'Get a 14-day free trial on any premium plan — no credit card required', cta: 'Start Free Trial' }];
 
-    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic/i.test(lowerDomain)) {
+    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic|muscle|blaze/i.test(lowerDomain)) {
       industry = 'Health & Wellness';
       description = `${name} offers premium quality health and wellness products designed to elevate your everyday physical performance and mental well-being.`;
       products = [
@@ -551,7 +588,23 @@ Extract details and return ONLY a valid JSON object matching the following struc
     }
 
     if (step === 3) {
-      if (!state.audience.personas.length) newErrors.personas = 'Select at least one audience persona';
+      // Validate that either 'All Products' has personas, or all selected products have their own audiences configured.
+      const audiences = state.audience.productAudiences;
+      const allSelectedProducts = state.products.selected;
+      
+      let isValid = false;
+      
+      const hasPersonas = (data) => data && (data.personas.length > 0 || data.customPersonas.length > 0);
+      
+      if (hasPersonas(audiences['All Products'])) {
+        isValid = true;
+      } else if (allSelectedProducts.length > 0 && allSelectedProducts.every(p => hasPersonas(audiences[p]))) {
+        isValid = true;
+      }
+
+      if (!isValid) {
+        newErrors.productAudiences = 'Select at least one persona in "All Products", or configure personas for each selected product.';
+      }
     }
 
     if (step === 4) {
@@ -622,13 +675,16 @@ Extract details and return ONLY a valid JSON object matching the following struc
     });
   };
 
-  // Apply suggested chatbot updates
+  // Apply suggested chatbot updates — deep clone first to avoid nested mutation
   const applySuggestedUpdates = (updates) => {
-    let newState = { ...state };
+    let newState = JSON.parse(JSON.stringify(state));
     Object.entries(updates).forEach(([key, val]) => {
       const parts = key.split('.');
       let obj = newState;
       for (let i = 0; i < parts.length - 1; i++) {
+        if (obj[parts[i]] === undefined || obj[parts[i]] === null) {
+          obj[parts[i]] = {};
+        }
         obj = obj[parts[i]];
       }
       obj[parts[parts.length - 1]] = val;
@@ -764,8 +820,8 @@ Extract details and return ONLY a valid JSON object matching the following struc
               {currentStep === 3 && (
                 <Step3Audience
                   audience={state.audience}
-                  updateAudienceField={updateAudienceField}
-                  togglePersona={togglePersona}
+                  products={state.products.selected}
+                  updateProductAudience={updateProductAudience}
                   errors={errors}
                 />
               )}
@@ -821,6 +877,10 @@ Extract details and return ONLY a valid JSON object matching the following struc
           state={state}
           applySuggestedUpdates={applySuggestedUpdates}
           addToast={addToast}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          triggerScrape={triggerScrape}
+          setShowWelcome={setShowWelcome}
         />
       )}
     </div>

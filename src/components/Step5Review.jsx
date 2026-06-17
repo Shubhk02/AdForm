@@ -114,25 +114,49 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
               Edit
             </button>
           </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Personas</div>
-            <div className="flex flex-wrap gap-1">
-              {state.audience.personas.map((p) => (
-                <span key={p} className="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Age Target</div>
-            <div className="text-slate-800 font-bold">
-              {state.audience.ageRange[0]} — {state.audience.ageRange[1] === 65 ? '65+' : state.audience.ageRange[1]} years
-            </div>
-          </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Lifestyle context</div>
-            <div className="text-slate-700 leading-relaxed break-words">{state.audience.lifestyleContext || '—'}</div>
+          <div className="flex flex-col gap-3">
+            {Object.entries(state.audience.productAudiences || {}).map(([prod, aud]) => {
+              const hasPersonas = aud.personas?.length > 0 || aud.customPersonas?.length > 0;
+              const hasContext = aud.lifestyleContext?.trim();
+              if (!hasPersonas && !hasContext) return null;
+
+              return (
+                <div key={prod} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-800 border-b border-slate-100 pb-1 mb-2">
+                    {prod === 'All Products' ? '🌐 All Products' : `📦 ${prod}`}
+                  </div>
+                  
+                  <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
+                    <div className="text-slate-400 font-semibold">Personas</div>
+                    <div className="flex flex-wrap gap-1">
+                      {[...(aud.personas || []), ...(aud.customPersonas || [])].map((p) => (
+                        <span key={p} className="bg-slate-50 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
+                    <div className="text-slate-400 font-semibold">Age Target</div>
+                    <div className="text-slate-800 font-bold">
+                      {(aud.ageRange || [25, 44])[0]} — {(aud.ageRange || [25, 44])[1] === 65 ? '65+' : (aud.ageRange || [25, 44])[1]} years
+                    </div>
+                  </div>
+                  
+                  {hasContext && (
+                    <div className="grid grid-cols-[90px_1fr] gap-x-2 text-xs">
+                      <div className="text-slate-400 font-semibold">Lifestyle</div>
+                      <div className="text-slate-700 leading-relaxed break-words">{aud.lifestyleContext}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            
+            {(!state.audience.productAudiences || Object.keys(state.audience.productAudiences).length === 0) && (
+              <span className="text-xs text-slate-500">—</span>
+            )}
           </div>
         </div>
 

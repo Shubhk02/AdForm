@@ -53,7 +53,7 @@ export default function Step1Brand({
         {/* Website URL */}
         <div className="flex flex-col">
           <label htmlFor="brandUrl" className="text-sm font-semibold text-slate-700 mb-1.5">
-            Website URL <span className="text-blue-600">*</span>
+            Website URL or Keywords <span className="text-blue-600">*</span>
           </label>
           <div className="flex gap-2">
             <input
@@ -61,7 +61,7 @@ export default function Step1Brand({
               id="brandUrl"
               value={brand.url}
               onChange={(e) => updateBrandField('url', e.target.value)}
-              placeholder="e.g. yourbrand.com"
+              placeholder="e.g. yourbrand.com or Brand Name"
               className={`flex-1 px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:ring-3 ${
                 errors.url
                   ? 'border-red-500 focus:ring-red-500/10'
