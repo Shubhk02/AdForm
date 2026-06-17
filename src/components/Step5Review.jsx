@@ -111,30 +111,45 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(3)}
-              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
           </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Personas</div>
-            <div className="flex flex-wrap gap-1">
-              {state.audience.personas.map((p) => (
-                <span key={p} className="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Age Target</div>
-            <div className="text-slate-800 font-bold">
-              {state.audience.ageRange[0]} — {state.audience.ageRange[1] === 65 ? '65+' : state.audience.ageRange[1]} years
-            </div>
-          </div>
-          <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
-            <div className="text-slate-400 font-semibold">Lifestyle context</div>
-            <div className="text-slate-700 leading-relaxed break-words">{state.audience.lifestyleContext || '—'}</div>
+          
+          <div className="flex flex-col gap-4">
+            {Object.entries(state.audience.productAudiences || {}).map(([productName, data]) => (
+              <div key={productName} className="border border-slate-200/50 rounded-lg p-3 bg-white space-y-2">
+                <div className="text-xs font-bold text-slate-800 pb-1 border-b border-slate-100">
+                  Target for: <span className="text-blue-600">{productName}</span>
+                </div>
+                
+                <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs pt-1">
+                  <div className="text-slate-400 font-semibold">Personas</div>
+                  <div className="flex flex-wrap gap-1">
+                    {data.personas.length > 0 ? data.personas.map((p) => (
+                      <span key={p} className="bg-slate-100 border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        {p}
+                      </span>
+                    )) : <span className="text-slate-500 italic">None selected</span>}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
+                  <div className="text-slate-400 font-semibold">Age Target</div>
+                  <div className="text-slate-800 font-bold">
+                    {data.ageRange[0]} — {data.ageRange[1] === 65 ? '65+' : data.ageRange[1]} years
+                  </div>
+                </div>
+                
+                {data.lifestyleContext && (
+                  <div className="grid grid-cols-[110px_1fr] gap-x-2 text-xs">
+                    <div className="text-slate-400 font-semibold">Lifestyle</div>
+                    <div className="text-slate-700 leading-relaxed break-words">{data.lifestyleContext}</div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
