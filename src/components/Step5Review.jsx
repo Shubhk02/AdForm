@@ -30,8 +30,8 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <span className="text-[11px] font-bold text-cyan-600 uppercase tracking-widest block mb-1">Section 5</span>
-        <h2 className="text-xl font-bold text-slate-900">Review &amp; Submit</h2>
+        <span className="text-sm font-semibold text-cyan-600 uppercase tracking-[0.3em] block mb-1">Section 5</span>
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Review &amp; Submit</h2>
         <p className="text-sm text-slate-500 mt-1">Check everything looks correct before sending your brief to our team.</p>
       </div>
 
@@ -43,7 +43,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(1)}
-              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
+              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -79,7 +79,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(2)}
-              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
+              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -109,7 +109,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(3)}
-              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
+              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -167,7 +167,7 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
             <button
               type="button"
               onClick={() => goToStep(4)}
-              className="text-xs font-bold text-blue-605 hover:underline cursor-pointer"
+              className="text-xs font-bold text-cyan-600 hover:underline cursor-pointer"
             >
               Edit
             </button>
@@ -206,15 +206,15 @@ export default function Step5Review({ state, goToStep, onSubmit, isSubmitting })
           type="button"
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="px-8 py-3 bg-gradient-to-r from-blue-950 to-blue-600 hover:shadow-lg hover:shadow-blue-500/15 disabled:bg-slate-300 disabled:shadow-none text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center min-w-[140px]"
+          className="px-8 py-3.5 bg-cyan-300 text-slate-950 hover:bg-purple-200 hover:shadow-lg hover:shadow-cyan-300/20 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center justify-center min-w-[140px]"
         >
           {isSubmitting ? (
             <>
-              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              <span className="inline-block w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin mr-2" />
               Submitting...
             </>
           ) : (
-            'Submit Campaign Brief ✓'
+            'Submit Campaign Brief ✦'
           )}
         </button>
       </div>

@@ -693,7 +693,13 @@ Extract details and return ONLY a valid JSON object matching the following struc
   };
 
   return (
-    <div className="relative min-height-screen z-10">
+    <div className="relative min-height-screen z-10 overflow-hidden">
+      {/* Blurred background blobs inspired by Adometer problem section */}
+      <div className="pointer-events-none fixed inset-0 z-[-1] overflow-hidden">
+        <div className="absolute left-[-12%] top-[8%] h-[440px] w-[440px] rounded-full bg-blue-100/70 blur-[120px]" />
+        <div className="absolute right-[-10%] top-[18%] h-[520px] w-[520px] rounded-full bg-cyan-100/60 blur-[130px]" />
+        <div className="absolute left-[30%] bottom-[-20%] h-[420px] w-[420px] rounded-full bg-purple-100/40 blur-[130px]" />
+      </div>
       {/* Toast notifications */}
       <div className="fixed top-[76px] right-5 z-[500] flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
@@ -730,17 +736,17 @@ Extract details and return ONLY a valid JSON object matching the following struc
       {/* Main Container */}
       <main className="max-w-[780px] mx-auto px-4 py-10 pb-24">
         {showWelcome ? (
-          <section className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12 text-center max-w-[850px] mx-auto animate-fadeIn">
-            <div className="inline-flex items-center gap-1.5 bg-blue-50/60 border border-blue-200/50 rounded-full px-4 py-1.5 text-[10px] font-bold text-cyan-655 uppercase tracking-widest mb-8">
+          <section className="flex flex-col items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12 text-center max-w-[850px] mx-auto animate-fadeIn relative z-10">
+            <div className="inline-flex items-center gap-1.5 bg-blue-50/60 border border-blue-200/50 rounded-full px-4 py-1.5 text-[11px] font-bold text-cyan-600 uppercase tracking-[0.3em] mb-8">
               AI-Powered Campaign Brief
             </div>
-            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-6 max-w-[720px]">
+            <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-slate-950 leading-[1.08] mb-6 max-w-[720px]">
               Launch your campaign <br />
-              <span className="bg-gradient-to-r from-blue-900 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-purple-500 bg-clip-text text-transparent">
                 in under 5 minutes
               </span>
             </h1>
-            <p className="text-base sm:text-lg text-slate-600 font-medium max-w-[540px] leading-relaxed mb-12">
+            <p className="text-base sm:text-xl text-slate-600 font-semibold max-w-[540px] leading-relaxed mb-12">
               Our intelligent form auto-fills fields from your website and guides you through the process with an AI assistant — no jargon, no complexity.
             </p>
 
@@ -765,7 +771,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
                   setShowWelcome(false);
                   setState(defaultState); // Starts with completely empty form
                 }}
-                className="px-8 py-3.5 bg-gradient-to-r from-blue-900 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/25 transition-all hover:-translate-y-0.5 cursor-pointer text-sm"
+                className="px-8 py-3.5 bg-cyan-300 text-slate-950 font-bold rounded-full shadow-lg shadow-cyan-300/20 hover:bg-purple-200 transition-colors cursor-pointer text-sm"
               >
                 ✦ Start Campaign Brief →
               </button>
@@ -775,7 +781,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
                   setState(defaultState); // Starts with completely empty form
                   setChatOpen(true);
                 }}
-                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all text-sm cursor-pointer"
+                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm cursor-pointer"
               >
                 💬 Fill via chat instead
               </button>

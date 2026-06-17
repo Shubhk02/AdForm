@@ -24,8 +24,8 @@ export default function Step1Brand({
   return (
     <div className="space-y-4">
       <div className="mb-4">
-        <span className="text-[11px] font-bold text-cyan-600 uppercase tracking-widest block mb-1">Section 1</span>
-        <h2 className="text-xl font-bold text-slate-900">About your Brand</h2>
+        <span className="text-sm font-semibold text-cyan-600 uppercase tracking-[0.3em] block mb-1">Section 1</span>
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">About your Brand</h2>
         <p className="text-sm text-slate-500 mt-1">Tell us who you are. We'll try to fetch details from your website automatically.</p>
       </div>
 
@@ -44,7 +44,7 @@ export default function Step1Brand({
             className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:ring-3 ${
               errors.name
                 ? 'border-red-500 focus:ring-red-500/10'
-                : 'border-slate-200 focus:border-blue-600 focus:ring-blue-600/10'
+                : 'border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20'
             }`}
           />
           {errors.name && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.name}</span>}
@@ -65,18 +65,18 @@ export default function Step1Brand({
               className={`flex-1 px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:ring-3 ${
                 errors.url
                   ? 'border-red-500 focus:ring-red-500/10'
-                  : 'border-slate-200 focus:border-blue-600 focus:ring-blue-600/10'
+                  : 'border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20'
               }`}
             />
             <button
               type="button"
               onClick={triggerScrape}
               disabled={scraperState.loading}
-              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-350 text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2"
+              className="px-4 py-2.5 bg-cyan-300 hover:bg-purple-200 disabled:bg-slate-200 disabled:text-slate-400 text-slate-950 text-xs font-bold rounded-full transition-colors cursor-pointer flex items-center gap-2"
             >
               {scraperState.loading ? (
                 <>
-                  <span className="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="inline-block w-3 h-3 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
                   Fetching
                 </>
               ) : (
@@ -109,10 +109,10 @@ export default function Step1Brand({
                 type="button"
                 key={ind}
                 onClick={() => toggleIndustry(ind)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                   isSelected
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-350'
+                    ? 'bg-cyan-600 border-cyan-600 text-white shadow-sm shadow-cyan-500/20'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                 }`}
               >
                 {ind}
@@ -142,7 +142,7 @@ export default function Step1Brand({
           className={`w-full px-4 py-2 bg-slate-50/50 border rounded-xl text-sm transition-all focus:outline-none focus:bg-white focus:ring-3 ${
             errors.description
               ? 'border-red-500 focus:ring-red-500/10'
-              : 'border-slate-200 focus:border-blue-600 focus:ring-blue-600/10'
+              : 'border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20'
           }`}
         />
         {errors.description && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.description}</span>}

@@ -105,8 +105,8 @@ export default function Step3Audience({
   return (
     <div className="space-y-6">
       <div className="mb-4">
-        <span className="text-[11px] font-bold text-cyan-600 uppercase tracking-widest block mb-1">Section 3</span>
-        <h2 className="text-xl font-bold text-slate-900">Target Audience</h2>
+        <span className="text-sm font-semibold text-cyan-600 uppercase tracking-[0.3em] block mb-1">Section 3</span>
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Target Audience</h2>
         <p className="text-sm text-slate-500 mt-1">Define your audience globally, or customize it for specific products.</p>
         {errors.productAudiences && <span className="text-xs text-red-500 mt-2 block font-medium">⚠ {errors.productAudiences}</span>}
       </div>
@@ -145,7 +145,7 @@ export default function Step3Audience({
                         type="checkbox" 
                         checked={isSelected}
                         onChange={() => toggleProductSelection(p)}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500"
                       />
                       <span className="text-sm font-medium text-slate-700">{p === 'All Products' ? '🌐 All Products' : `📦 ${p}`}</span>
                     </label>
@@ -185,7 +185,7 @@ export default function Step3Audience({
             {personas.map(p => {
               const label = allPersonasOptions.find(x => x.id === p)?.label || p;
               return (
-                <span key={p} className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+                <span key={p} className="bg-cyan-50 text-cyan-700 border border-cyan-200 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
                   {label}
                   <button type="button" onClick={(e) => { e.stopPropagation(); handleTogglePersona(p); }} className="hover:text-rose-500 ml-1">✕</button>
                 </span>
@@ -210,12 +210,12 @@ export default function Step3Audience({
                     if (e.key === 'Enter') { e.preventDefault(); handleAddCustom(); }
                   }}
                   placeholder="Type new persona and hit Add..." 
-                  className="w-full text-sm px-3 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500"
+                  className="w-full text-sm px-3 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-cyan-500/20"
                 />
                 <button 
                   type="button" 
                   onClick={handleAddCustom}
-                  className="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold hover:bg-blue-700 whitespace-nowrap"
+                  className="bg-cyan-300 text-slate-950 px-4 rounded-full text-xs font-bold hover:bg-purple-200 whitespace-nowrap transition-colors"
                 >
                   Add
                 </button>
@@ -232,7 +232,7 @@ export default function Step3Audience({
                           if (customPersonas.includes(p.id)) handleRemoveCustom(p.id);
                           else handleTogglePersona(p.id);
                         }}
-                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500"
                       />
                       <span className="text-sm font-medium text-slate-700">{p.label}</span>
                     </label>
@@ -250,23 +250,23 @@ export default function Step3Audience({
           </label>
           <div className="flex justify-between items-center text-[11px] font-bold text-slate-700 bg-white py-2 px-3 rounded-xl border border-slate-200/50 mb-4 shadow-sm">
             <span>Min: {minVal} years</span>
-            <span className="text-blue-600 font-extrabold font-mono text-sm">{minVal} — {maxVal === 65 ? '65+' : maxVal}</span>
+            <span className="text-cyan-600 font-extrabold font-mono text-sm">{minVal} — {maxVal === 65 ? '65+' : maxVal}</span>
             <span>Max: {maxVal === 65 ? '65+' : maxVal} years</span>
           </div>
 
           <div className="relative w-full h-7 flex items-center">
             <div className="absolute left-0 right-0 h-1.5 bg-slate-200 rounded-lg pointer-events-none z-0" />
             <div
-              className="absolute h-1.5 bg-gradient-to-r from-blue-900 to-blue-600 rounded-lg pointer-events-none z-10"
+              className="absolute h-1.5 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg pointer-events-none z-10"
               style={{ left: `${leftPct}%`, width: `${rightPct - leftPct}%` }}
             />
             <input
               type="range" min="18" max="65" value={minVal} onChange={handleMinChange}
-              className="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none focus:outline-none z-20 pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+              className="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none focus:outline-none z-20 pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-cyan-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
             />
             <input
               type="range" min="18" max="65" value={maxVal} onChange={handleMaxChange}
-              className="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none focus:outline-none z-20 pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-600 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+              className="absolute w-full h-1.5 appearance-none bg-transparent pointer-events-none focus:outline-none z-20 pointer-events-auto [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-cyan-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
             />
           </div>
         </div>
@@ -282,7 +282,7 @@ export default function Step3Audience({
             onChange={(e) => updateProductAudience(activeProducts, 'lifestyleContext', e.target.value)}
             placeholder="Describe hobbies, behaviors, or details..."
             rows={3}
-            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:border-blue-500 shadow-sm"
+            className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm transition-all focus:outline-none focus:border-cyan-500 focus:ring-3 focus:ring-cyan-500/20 shadow-sm"
           />
         </div>
       </div>

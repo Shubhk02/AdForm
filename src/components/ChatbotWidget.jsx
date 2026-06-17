@@ -359,7 +359,7 @@ Return ONLY this JSON structure, nothing else:
                   <div
                     className={`text-xs px-4 py-2.5 rounded-2xl leading-relaxed whitespace-pre-wrap ${isBot
                         ? 'bg-slate-50 border border-slate-200/50 text-slate-800'
-                        : 'bg-gradient-to-br from-blue-900 to-blue-600 text-white'
+                        : 'bg-gradient-to-r from-blue-900 via-blue-700 to-purple-500 text-white'
                       }`}
                   >
                     {m.content}
@@ -395,9 +395,9 @@ Return ONLY this JSON structure, nothing else:
                       <button
                         type="button"
                         onClick={() => handleApply(m.suggestions, m.stepChange)}
-                        className="w-full py-2 bg-gradient-to-r from-blue-900 to-blue-600 text-white font-bold rounded-xl text-[11px] cursor-pointer transition-all hover:opacity-90 shadow-sm shadow-blue-500/20 flex items-center justify-center gap-1.5"
+                        className="w-full py-2 bg-cyan-300 hover:bg-purple-200 text-slate-950 font-bold rounded-full text-[11px] cursor-pointer transition-colors shadow-sm flex items-center justify-center gap-1.5"
                       >
-                        Apply to form ✓
+                        Apply to form ✦
                       </button>
                     </div>
                   )}
@@ -447,15 +447,15 @@ Return ONLY this JSON structure, nothing else:
             onKeyDown={handleKeyDown}
             placeholder="Describe your brand, audience, budget, cities…"
             rows={1}
-            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-blue-600 resize-none max-h-20 leading-relaxed"
+            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 resize-none max-h-20 leading-relaxed"
           />
           <button
             onClick={() => handleSend()}
             disabled={isTyping || !inputVal.trim()}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-900 to-blue-600 text-white flex items-center justify-center text-xs hover:scale-105 active:scale-95 transition-all flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center text-xs hover:bg-cyan-600 transition-colors flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
-            ➤
+            ✦
           </button>
         </div>
       </div>
