@@ -750,7 +750,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
       </header>
 
       {/* Main Container */}
-      <main className={`max-w-[780px] mx-auto px-4 w-full ${showWelcome ? 'h-screen flex items-center justify-center pt-16 pb-0' : 'pt-28 pb-12'}`}>
+      <main className={`max-w-[780px] mx-auto px-4 w-full min-h-screen flex flex-col justify-center ${showWelcome ? 'pt-16 pb-0' : 'pt-28 pb-12'}`}>
         {showWelcome ? (
           <section className="glass-panel glass-panel-hover rounded-[1.75rem] p-10 md:p-14 text-center max-w-[850px] w-full animate-fadeIn relative z-10">
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-950 leading-snug mb-6 max-w-[720px] mx-auto">
