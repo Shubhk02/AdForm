@@ -630,7 +630,11 @@ Extract details and return ONLY a valid JSON object matching the following struc
   };
 
   const handleBack = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    if (currentStep === 1) {
+      setShowWelcome(true);
+    } else {
+      setCurrentStep((prev) => Math.max(prev - 1, 1));
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -877,7 +881,6 @@ Extract details and return ONLY a valid JSON object matching the following struc
                 <button
                   type="button"
                   onClick={handleBack}
-                  disabled={currentStep === 1}
                   className="px-5 py-2.5 bg-white border border-slate-200 text-xs font-semibold text-slate-600 rounded-xl hover:border-blue-600 hover:text-blue-600 disabled:opacity-50 transition-all cursor-pointer"
                 >
                   ← Back
