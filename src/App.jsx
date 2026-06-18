@@ -335,9 +335,11 @@ export default function App() {
     }
 
     const prompt = `You are an expert campaign onboarding assistant. The user provided the following website URL or brand name: "${urlVal}".
-If you can, search the web to find the official website URL for this brand. Analyze its content:
+Please use Google Search to find the official website and gather the most accurate and up-to-date information about this brand.
+
+If needed, here is some text extracted from the URL as additional context:
 ---
-${webText || "No text could be extracted. Please infer brand details based purely on the brand name/URL provided."}
+${webText || "No text could be extracted."}
 ---
 
 Extract details and return ONLY a valid JSON object matching the following structure. Do NOT include markdown code blocks (like \`\`\`json):
@@ -361,6 +363,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ googleSearch: {} }],
         generationConfig: {
           responseMimeType: 'application/json'
         }
