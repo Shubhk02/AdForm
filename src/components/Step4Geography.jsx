@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import Checkbox from './Checkbox';
 
 const CITIES_LIST = ['Gurgaon', 'Noida', 'South Delhi'];
 const BUDGET_LIST = [
@@ -30,6 +31,7 @@ export default function Step4Geography({
   errors
 }) {
   const minDate = getMinDateString();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Set default goLiveDate if empty
   useEffect(() => {
@@ -48,32 +50,43 @@ export default function Step4Geography({
         </p>
       </div>
 
-      {/* Target Cities Chips */}
-      <div className="flex flex-col">
+      {/* Target Cities Multi-Select Dropdown */}
+      <div className="flex flex-col relative z-40">
         <label className="text-sm font-semibold text-slate-700 mb-1">
           Target Cities <span className="text-blue-600">*</span>
         </label>
-        <p className="text-xs text-slate-500 mb-3">Delhi NCR areas are pre-selected by default</p>
         
-        <div className="flex flex-wrap gap-2">
-          {CITIES_LIST.map((city) => {
-            const isSelected = geography.cities.includes(city);
-            return (
-              <button
-                type="button"
-                key={city}
-                onClick={() => toggleCity(city)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                  isSelected
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-350'
-                }`}
-              >
-                📍 {city}
-              </button>
-            );
-          })}
+        <div 
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-semibold cursor-pointer flex justify-between items-center transition-all hover:bg-white hover:border-blue-300"
+        >
+          <span className="truncate pr-4 text-slate-700">
+            {geography.cities.length === 0 ? 'Select cities...' : geography.cities.join(', ')}
+          </span>
+          <span className="text-slate-400 text-xs">{dropdownOpen ? '▲' : '▼'}</span>
         </div>
+
+        {dropdownOpen && (
+          <div className="absolute top-[76px] left-0 w-full bg-white border border-slate-200 shadow-xl rounded-xl p-2 flex flex-col gap-1 max-h-60 overflow-y-auto z-50">
+            {CITIES_LIST.map((city) => {
+              const isSelected = geography.cities.includes(city);
+              return (
+                <div 
+                  key={city} 
+                  onClick={() => toggleCity(city)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all ${isSelected ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+                >
+                  <div className="pointer-events-none">
+                    <Checkbox checked={isSelected} onChange={() => {}} id={`city-${city.replace(/\s+/g, '-')}`} />
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{city}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="text-xs text-slate-500 mt-2">Delhi NCR areas are pre-selected by default</p>
         {errors.cities && <span className="text-xs text-red-500 mt-1 flex items-center gap-1">⚠ {errors.cities}</span>}
       </div>
 

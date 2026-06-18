@@ -625,17 +625,20 @@ Extract details and return ONLY a valid JSON object matching the following struc
   const handleNext = () => {
     if (validateStep(currentStep)) {
       setCurrentStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goToStep = (step) => {
     // Permitted if returning or if target validation is satisfied
     if (step < currentStep || validateStep(currentStep)) {
       setCurrentStep(step);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
