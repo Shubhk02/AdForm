@@ -32,7 +32,7 @@ export default function CardProgressBar({ currentStep, stepsCount, stepNames, go
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold transition-all duration-300 ${
                       isCompleted || isActive
-                        ? 'bg-[#6bc04b] text-white shadow-md shadow-green-500/20'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
                         : 'bg-white border-2 border-slate-300 text-slate-400'
                     }`}
                   >
@@ -56,7 +56,7 @@ export default function CardProgressBar({ currentStep, stepsCount, stepNames, go
               {i < stepsCount - 1 && (
                 <div
                   className={`h-[2.5px] flex-1 mx-1 transition-all duration-300 ${
-                    stepNum < currentStep ? 'bg-[#6bc04b]' : 'bg-slate-300'
+                    stepNum < currentStep ? 'bg-blue-600' : 'bg-slate-300'
                   }`}
                 />
               )}

@@ -788,7 +788,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
                   setShowWelcome(false);
                   setState(defaultState); // Starts with completely empty form
                 }}
-                className="px-8 py-3.5 bg-cyan-300 text-slate-950 font-bold rounded-full shadow-lg shadow-cyan-300/20 hover:bg-purple-200 transition-colors cursor-pointer text-sm"
+                className="px-8 py-3.5 bg-cyan-300 text-slate-950 font-bold rounded-full shadow-lg shadow-cyan-300/20 hover:bg-purple-200 transition-colors duration-500 cursor-pointer text-sm"
               >
                 ✦ Start Campaign Brief →
               </button>
@@ -798,7 +798,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
                   setState(defaultState); // Starts with completely empty form
                   setChatOpen(true);
                 }}
-                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm cursor-pointer"
+                className="px-8 py-3.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors duration-500 text-sm cursor-pointer"
               >
                 💬 Fill via chat instead
               </button>
