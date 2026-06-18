@@ -736,9 +736,18 @@ Extract details and return ONLY a valid JSON object matching the following struc
             {!isSubmitted && (
               <button
                 onClick={saveAndContinue}
-                className={`hidden rounded-full px-4 py-2 text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 border shadow-sm cursor-pointer sm:inline-flex ${isNavbarDark ? 'border-white/20 bg-white/10 text-white hover:bg-white/20' : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50'}`}
+                className={`hidden rounded-full pl-3 pr-4 py-2 text-xs font-bold transition-all duration-300 hover:-translate-y-0.5 border shadow-sm cursor-pointer sm:inline-flex items-center gap-1.5 ${isNavbarDark ? 'border-white/20 bg-white/10 text-white hover:bg-white/20' : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300 hover:bg-slate-50'}`}
               >
-                💾 Save
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 3C1 1.89543 1.89543 1 3 1H11L15 5V13C15 14.1046 14.1046 15 13 15H3C1.89543 15 1 14.1046 1 13V3Z" fill="#3196D2"/>
+                  <rect x="4" y="1" width="7" height="4" fill="#BCC8CE"/>
+                  <rect x="8" y="2" width="2" height="3" fill="#2B363A"/>
+                  <rect x="3" y="7" width="10" height="7" fill="#FFFFFF"/>
+                  <rect x="4.5" y="8.5" width="7" height="1" fill="#CFD8DC"/>
+                  <rect x="4.5" y="10.5" width="7" height="1" fill="#CFD8DC"/>
+                  <rect x="4.5" y="12.5" width="7" height="1" fill="#CFD8DC"/>
+                </svg>
+                Save
               </button>
             )}
             
