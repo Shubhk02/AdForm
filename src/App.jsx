@@ -503,7 +503,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
     ];
     let activeOffers = [{ text: 'Get a 14-day free trial on any premium plan — no credit card required', cta: 'Start Free Trial' }];
 
-    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic|muscle|blaze/i.test(lowerDomain)) {
+    if (/health|fit|gym|wellness|yoga|diet|nutri|supplement|active|sport|med|doctor|clinic|muscle|blaze|feed/i.test(lowerDomain)) {
       industry = 'Health & Wellness';
       description = `${name} offers premium quality health and wellness products designed to elevate your everyday physical performance and mental well-being.`;
       products = [
@@ -708,7 +708,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
         <div className="absolute left-[30%] bottom-[-20%] h-[420px] w-[420px] rounded-full bg-purple-100/40 blur-[130px]" />
       </div>
       {/* Toast notifications */}
-      <div className="fixed top-[76px] right-5 z-[500] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed top-[110px] right-5 z-[1000] flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
           <div
             key={t.id}
