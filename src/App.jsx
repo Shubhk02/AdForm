@@ -7,6 +7,7 @@ import Step4Geography from './components/Step4Geography';
 import Step5Review from './components/Step5Review';
 import ChatbotWidget from './components/ChatbotWidget';
 import ConfirmationPage from './components/ConfirmationPage';
+import DashboardPage from './components/DashboardPage';
 import { db } from './firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import adometerLogoWhite from './assets/adometer-logo.png';
@@ -48,6 +49,7 @@ export default function App() {
   const [state, setState] = useState(defaultState);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [briefId, setBriefId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastScrapedUrl, setLastScrapedUrl] = useState('');
@@ -674,6 +676,12 @@ Extract details and return ONLY a valid JSON object matching the following struc
     setBriefId(generatedBriefId);
     setIsSubmitted(true);
     setIsSubmitting(false);
+
+    // Auto-navigate to dashboard after 3.5 seconds
+    setTimeout(() => {
+      setShowDashboard(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 3500);
   };
 
   // Copy save link to clipboard
@@ -769,7 +777,12 @@ Extract details and return ONLY a valid JSON object matching the following struc
       </header>
 
       {/* Main Container */}
-      <main className={`max-w-[780px] mx-auto px-4 w-full min-h-screen flex flex-col justify-center ${showWelcome ? 'pt-16 pb-0' : 'pt-28 pb-12'}`}>
+      {showDashboard && isSubmitted ? (
+        <main className="w-full pt-[115px]">
+          <DashboardPage state={state} briefId={briefId} />
+        </main>
+      ) : null}
+      <main className={`${showDashboard && isSubmitted ? 'hidden' : ''} max-w-[780px] mx-auto px-4 w-full min-h-screen flex flex-col justify-center ${showWelcome ? 'pt-16 pb-0' : 'pt-28 pb-12'}`}>
         {showWelcome ? (
           <section className="glass-panel glass-panel-hover rounded-[1.75rem] p-10 md:p-14 text-center max-w-[850px] w-full animate-fadeIn relative z-10">
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-950 leading-snug mb-6 max-w-[720px] mx-auto">
@@ -813,7 +826,7 @@ Extract details and return ONLY a valid JSON object matching the following struc
           </section>
         ) : isSubmitted ? (
           <div className="glass-panel rounded-3xl p-8">
-            <ConfirmationPage briefId={briefId} />
+            <ConfirmationPage briefId={briefId} onViewDashboard={() => setShowDashboard(true)} />
           </div>
         ) : (
           <div className="glass-panel glass-panel-hover rounded-3xl p-8 transition-shadow duration-300 relative overflow-hidden">
